@@ -3,9 +3,10 @@ tscope.js
 
 Functional lenses in JavaScript
 
-`Tscope.attr('field')` Object attribute accessor<br/>
-`Tscope.at(index)` Array element accessor<br/>
-`lens.then(otherLens)` Lens composition
+`Tscope.attr('field')` Object attribute accessor   
+`Tscope.at(index)` Array element accessor   
+`lens.then(otherLens)` Lens composition   
+`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments
 
 
 ```javascript

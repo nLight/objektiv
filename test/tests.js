@@ -32,10 +32,15 @@ describe('Tscope', function(){
   });
 
   describe('Composition', function() {
-    var data = { someField: [1, 2, 3] };
+    var data = { someField: [1, 2, {foo: 10}] };
     
-    it('Composes a lenses', function() {
+    it('Composes two lenses', function() {
       assert.deepEqual(1,  Tscope.attr('someField').then(Tscope.at(0))(data));
+    });
+
+    it('Composes arbitrary number of lenses', function() {
+      var composition = Tscope.attr('someField').then(Tscope.at(2), Tscope.attr('foo'))
+      assert.deepEqual(10,  composition(data));
     });
   });
 

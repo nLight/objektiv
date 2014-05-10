@@ -37,18 +37,20 @@ Tscope.makeLens = function(getter, setter){
     return setter(a, f(getter(a))); 
   };
 
-  f.then = function(f1, f2) {
-    return Tscope.makeLens(
-      function(a) {
-        var _a = f1(a);
-        return f2(_a);
-      },
-      function(a, val) {
-        var _a = f1(a);
-        var _val = f2(_a, val);
-        return f1(a, _val);
-      }
-    );
+  f.then = function() {
+    return Array.prototype.slice.call(arguments, 0).reduce(function(lens1, lens2){
+      return Tscope.makeLens(
+        function(a) {
+          var _a = lens1(a);
+          return lens2(_a);
+        },
+        function(a, val) {
+          var _a = lens1(a);
+          var _val = lens2(_a, val);
+          return lens1(a, _val);
+        }
+      );
+    });
   }.bind(null, f);
 
   return f;
