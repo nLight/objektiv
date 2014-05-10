@@ -5,14 +5,12 @@ describe('Tscope', function(){
   describe('Object property', function(){
     var data = { someField: 1 };
 
-    Tscope.make('someField');
-
     it('returns value of a property', function(){
-      assert.equal(1, Tscope.o.someField(data));
+      assert.equal(1, Tscope.attr('someField')(data));
     });
 
     it('sets a value of a property', function() {
-      assert.deepEqual(Tscope.o.someField(data, 2), { someField: 2 });
+      assert.deepEqual(Tscope.attr('someField')(data, 2), { someField: 2 });
     });
   });
 
@@ -30,10 +28,9 @@ describe('Tscope', function(){
 
   describe('Composition', function() {
     var data = { someField: [1, 2, 3] };
-    Tscope.make('someField');
     
     it('Composes a lenses', function() {
-      assert.deepEqual(1,  Tscope.o.someField.$(Tscope.at(0))(data));
+      assert.deepEqual(1,  Tscope.attr('someField').$(Tscope.at(0))(data));
     });
   });
 

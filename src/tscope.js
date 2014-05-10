@@ -55,7 +55,7 @@ Tscope.makeLens = function(getter, setter){
 };
 
 Tscope.at = function(i) {
-  return Tscope.makeLens(
+  var _l = Tscope.makeLens(
     function(a) {
       return a[i];
     },
@@ -65,28 +65,38 @@ Tscope.at = function(i) {
       return _a;
     }
   );
+  
+  _l.name = "at_" + i
+
+  return _l;
+};
+
+Tscope.attr = function(name) {
+  if (Tscope.o.hasOwnProperty(name)) {
+    return Tscope.o[name];
+  };
+
+  var _l = Tscope.makeLens(
+    function(a) {
+      return a[name];
+    },
+    function(a, val) {
+      var o = extend({}, o);
+      o[name] = val;
+      return o;
+    }
+  );
+  
+  _l.name = name;
+
+  return _l;
 };
 
 Tscope.make = function() {
   for (var i = arguments.length - 1; i >= 0; i--) {
     var f = arguments[i];
-
-    if (Tscope.o.hasOwnProperty(f)) {
-      continue;
-    };
     
-    Tscope.o[f] = (function(name){
-      return Tscope.makeLens(
-        function(a) {
-          return a[name];
-        },
-        function(a, val) {
-          var o = extend({}, o);
-          o[name] = val;
-          return o;
-        }
-      );
-    })(f);
+    Tscope.o[f] = Tscope.attr(f);
     Tscope.o[f].name = f;
   };
 }
