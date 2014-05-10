@@ -66,8 +66,6 @@ Tscope.at = function(i) {
     }
   );
   
-  _l.name = "at_" + i
-
   return _l;
 };
 
@@ -86,8 +84,6 @@ Tscope.attr = function(name) {
       return o;
     }
   );
-  
-  _l.name = name;
 
   return _l;
 };
@@ -95,9 +91,7 @@ Tscope.attr = function(name) {
 Tscope.makeAll = function() {
   for (var i = arguments.length - 1; i >= 0; i--) {
     var f = arguments[i];
-    
     Tscope.o[f] = Tscope.attr(f);
-    Tscope.o[f].name = f;
   };
 }
 
