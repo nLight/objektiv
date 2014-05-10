@@ -5,12 +5,12 @@ Functional lenses in JavaScript
 
 `Tscope.attr('field')` Object attribute accessor<br/>
 `Tscope.at(index)` Array element accessor<br/>
-`lens.$(otherLens)` Lens composition
+`lens.then(otherLens)` Lens composition
 
 
 ```javascript
 var data = { array: [1, 2, 3] };
-var firstOfSome = Tscope.attr('array').$(Tscope.at(0));
+var firstOfSome = Tscope.attr('array').then(Tscope.at(0));
 
 // Getter
 firstOfSome(data); //=> 1

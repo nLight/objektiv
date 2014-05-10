@@ -37,7 +37,7 @@ Tscope.makeLens = function(getter, setter){
     return setter(a, f(getter(a))); 
   };
 
-  f.$ = function(f1, f2) {
+  f.then = function(f1, f2) {
     return Tscope.makeLens(
       function(a) {
         var _a = f1(a);

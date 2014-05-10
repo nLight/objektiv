@@ -35,7 +35,7 @@ describe('Tscope', function(){
     var data = { someField: [1, 2, 3] };
     
     it('Composes a lenses', function() {
-      assert.deepEqual(1,  Tscope.attr('someField').$(Tscope.at(0))(data));
+      assert.deepEqual(1,  Tscope.attr('someField').then(Tscope.at(0))(data));
     });
   });
 
