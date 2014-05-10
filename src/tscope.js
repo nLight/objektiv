@@ -33,7 +33,7 @@ Tscope.makeLens = function(getter, setter){
   f.get = getter; // l(a) = l.get(a);
   f.set = setter; // l(a, val) = l.set(a,val);
   
-  f.mod = function (f, a) { 
+  f.mod = function (a, f) { 
     return setter(a, f(getter(a))); 
   };
 
