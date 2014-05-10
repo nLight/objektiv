@@ -3,6 +3,8 @@ tscope.js
 
 Functional lenses in JavaScript
 
+[![Build Status](https://travis-ci.org/nLight/tscope.js.svg?branch=master)](https://travis-ci.org/nLight/tscope.js)
+
 `Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed   
 `Tscope.at(index)` Array element accessor   
 `lens.then(otherLens)` Lens composition   
