@@ -1,0 +1,25 @@
+{
+  "name": "tscope.js",
+  "version": "0.0.1",
+  "description": "Functional lenses in JavaScript",
+  "main": "index.js",
+  "scripts": {
+    "test": "node_modules/mocha/bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nLight/tscope.js.git"
+  },
+  "keywords": [
+    "Lenses",
+    "Lens"
+  ],
+  "devDependencies": {
+    "mocha": "~1.18.0"
+  },
+  "author": "Dmitriy Rozhkov",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nLight/tscope.js/issues"
+  }
+}
