@@ -92,7 +92,7 @@ Tscope.attr = function(name) {
   return _l;
 };
 
-Tscope.make = function() {
+Tscope.makeAll = function() {
   for (var i = arguments.length - 1; i >= 0; i--) {
     var f = arguments[i];
     
