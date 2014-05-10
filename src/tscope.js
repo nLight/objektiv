@@ -72,22 +72,35 @@ Tscope.at = function(i) {
 };
 
 Tscope.attr = function(name) {
-  if (Tscope.o.hasOwnProperty(name)) {
-    return Tscope.o[name];
-  };
+  var createLens = function (name) {
+    if (Tscope.o.hasOwnProperty(name)) {
+      return Tscope.o[name];
+    };
 
-  var _l = Tscope.makeLens(
-    function(a) {
-      return a[name];
-    },
-    function(a, val) {
-      var o = extend({}, o);
-      o[name] = val;
-      return o;
-    }
-  );
+    var _l = Tscope.makeLens(
+      function(a) {
+        return a[name];
+      },
+      function(a, val) {
+        var o = extend({}, o);
+        o[name] = val;
+        return o;
+      }
+    );
 
-  return _l;
+    return _l;
+  }
+
+  var l = createLens(name);
+
+  if (arguments.length == 1) {
+    return l;
+  } 
+  else {
+    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
+      return lens.then(createLens(name));
+    }, l);
+  }
 };
 
 Tscope.makeAll = function() {

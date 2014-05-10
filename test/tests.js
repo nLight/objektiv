@@ -2,6 +2,14 @@ var assert = require("assert")
 var Tscope = require("../src/tscope")
 
 describe('Tscope', function(){
+  describe('#attr', function() {
+    var data = { deep: {data: {structure: 1}} };
+
+    it('takes arbitrary number of arguments', function() {
+      assert.equal(1, Tscope.attr('deep', 'data', 'structure').get(data));
+    });
+  });
+
   describe('Object property', function(){
     var data = { someField: 1 };
 
