@@ -66,7 +66,7 @@ Tscope also provides low-level `Tscope.makeCursor(getter, setter, [lens])`. For 
 var that = this;
 var full = Tscope.makeCursor(
     function () {return that.state},
-    function (value) {return that.pushState(value)}
+    function (value) {return that.setState(value)}
 );
 var deepCursor = full.then(Tscope.attr('some', 'deep'));
 // ... pass it to child component
