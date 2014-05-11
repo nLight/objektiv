@@ -1,3 +1,4 @@
+
 function extend(obj) {
   Array.prototype.slice.call(arguments, 1).forEach(function(source) {
     if (source) {
@@ -35,7 +36,7 @@ Tscope.makeLens = function(getter, setter){
   
   f.mod = function (a, f) { 
     var _val = getter(a);
-    if (_val.length === undefined)
+    if (!Array.isArray(_val))
         return setter(a, f(_val)); 
     else 
         return setter(a, _val.map(f));
@@ -120,7 +121,7 @@ Tscope.traversed = function(lens){
         return xs.map(function(x){return lens(x)});
       },
       function(xs, vals) {
-        if (vals.length === undefined)
+        if (!Array.isArray(vals))
           return xs.map(function(x){return lens(x, vals)});
         else
           return xs.map(function(x,i){return lens(x, vals[i])});          
