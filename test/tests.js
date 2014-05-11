@@ -77,7 +77,7 @@ describe('Tscope', function(){
       });
 
     it('modifies values over traversed x', function() {
-      var incr = function(xs){return xs.map(function(x){return x + 1});};
+      var incr = function(x){return x + 1};
       assert.deepEqual(traverse.mod(data, incr), {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]});
     });
 
