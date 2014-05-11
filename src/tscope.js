@@ -110,4 +110,20 @@ Tscope.makeAll = function() {
   };
 }
 
+Tscope.traversed = function(lens){
+    var _l = Tscope.makeLens(
+      function(xs) {
+        return xs.map(function(x){return lens(x)});
+      },
+      function(xs, vals) {
+        if (vals.length === undefined)
+          return xs.map(function(x){return lens(x, vals)});
+        else
+          return xs.map(function(x,i){return lens(x, vals[i])});          
+      }
+    );
+
+    return _l;
+}
+
 module.exports = Tscope;
