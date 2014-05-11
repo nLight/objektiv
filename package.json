@@ -15,7 +15,8 @@
     "Lens"
   ],
   "devDependencies": {
-    "mocha": "~1.18.0"
+    "mocha": "~1.18.0",
+    "grunt-browserify": "~2.0.0"
   },
   "author": "Dmitriy Rozhkov",
   "license": "MIT",
