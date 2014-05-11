@@ -123,4 +123,49 @@ Tscope.traversed = function(lens){
   return _l;
 }
 
+Tscope.full = Tscope.makeLens(
+  function(a) {return a},
+  function(a, val) {return val}
+);
+
+
+/// Cursors
+Tscope.makeCursor = function(getter, setter, lens) {
+  lens = lens || Tscope.full;
+
+  var c = function(value) {
+    if (arguments.length === 0) {
+      return c.get()
+    } else {
+      return c.set(value);
+    }
+  }
+  c.get = function() {
+    return lens(getter());
+  };
+  c.set = function(value) {
+    return setter(lens(getter(), value));
+  }
+  c.mod = function(f) {
+    return c.set(f(c.get()));
+  }
+
+  c.then = function() {
+    return Tscope.makeCursor(getter, setter, lens.then.apply(null, arguments));
+    // var lenses = [].slice.call(arguments);
+    // return Tscope.makeCursor(getter, setter, lens.then.call(lens, lenses));
+  }
+
+  return c;
+}
+
+Tscope.dataCursor = function(data, lens) {
+  return Tscope.makeCursor(
+    function(){return data},
+    function(value){data = value},
+    lens
+  )
+}
+
+
 module.exports = Tscope;
