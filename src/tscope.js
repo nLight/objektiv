@@ -82,7 +82,7 @@ Tscope.attr = function(name) {
         return a[name];
       },
       function(a, val) {
-        var o = extend({}, o);
+        var o = extend({}, a);
         o[name] = val;
         return o;
       }
