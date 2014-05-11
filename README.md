@@ -63,9 +63,10 @@ data   //=> {some: deep: 1}
 Tscope also provides low-level `Tscope.makeCursor(getter, setter, [lens])`. For example, this way it can be used with react.js:
 
 ```javascript
+var that = this;
 var full = Tscope.makeCursor(
-    function () {return this.state},
-    function (value) {return this.pushState(value)}
+    function () {return that.state},
+    function (value) {return that.pushState(value)}
 );
 var deepCursor = full.then(Tscope.attr('some', 'deep'));
 // ... pass it to child component
