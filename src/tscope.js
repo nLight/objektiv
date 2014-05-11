@@ -1,24 +1,11 @@
-function extend(obj) {
-  Array.prototype.slice.call(arguments, 1).forEach(function(source) {
-    if (source) {
-      for (var prop in source) {
-        if (source[prop].constructor === Object) {
-          if (!obj[prop] || obj[prop].constructor === Object) {
-            obj[prop] = obj[prop] || {};
-            extend(obj[prop], source[prop]);
-          } 
-          else {
-            obj[prop] = source[prop];
-          }
-        } 
-        else {
-          obj[prop] = source[prop];
-        }
-      }
-    }
-  });
-  return obj;
-};
+// Creates a shallow copy of source object
+function copyObject(source) {
+  var copy = {};
+  for (var prop in source) {
+    copy[prop] = source[prop];
+  }
+  return copy;
+}
 
 var Tscope = {o:{}};
 
@@ -90,7 +77,7 @@ Tscope.attr = function(name) {
         return a[name];
       },
       function(a, val) {
-        var o = extend({}, a);
+        var o = copyObject(a || {});
         o[name] = val;
         return o;
       }
