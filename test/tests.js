@@ -11,19 +11,19 @@ describe('Tscope', function(){
   });
 
   describe('Object property', function(){
-    var data = { someField: 1 };
+    var data = { someField: 1, someValue: 2 };
 
     it('returns value of a property', function(){
       assert.equal(1, Tscope.attr('someField')(data));
     });
 
     it('sets a value of a property', function() {
-      assert.deepEqual(Tscope.attr('someField')(data, 2), { someField: 2 });
+      assert.deepEqual(Tscope.attr('someField')(data, 2), { someField: 2, someValue: 2 });
     });
 
     it('modifies a value of a property', function() {
       var incr = function(x){ return x + 1};
-      assert.deepEqual(Tscope.attr('someField').mod(data, incr), { someField: 2 });
+      assert.deepEqual(Tscope.attr('someField').mod(data, incr), { someField: 2, someValue:2 });
     });
   });
 
