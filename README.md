@@ -8,7 +8,8 @@ Functional lenses in JavaScript
 `Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed   
 `Tscope.at(index)` Array element accessor   
 `lens.then(otherLens)` Lens composition   
-`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments
+`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments   
+`Tscope.traversed(lens)` Returns traversed lens
 
 
 ```javascript
@@ -27,4 +28,10 @@ firstOfSome.set(data, 10); //=> { array: [10, 2, 3] }
 var incr = function(x){ return x + 1 };
 firstOfSome.mod(data, incr); //=> { array: [2, 2, 3] }
 
+// Traversal
+var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
+var traverse = Tscope.attr('array').then(Tscope.traversed(Tscope.attr('x')));
+
+traverse(data); //=> [0, 1, 2]
+traverse(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 ```
