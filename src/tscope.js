@@ -98,13 +98,6 @@ Tscope.attr = function(name) {
   }
 };
 
-Tscope.makeAll = function() {
-  for (var i = arguments.length - 1; i >= 0; i--) {
-    var f = arguments[i];
-    Tscope.o[f] = Tscope.attr(f);
-  };
-}
-
 Tscope.traversed = function(lens){
   var _l = Tscope.makeLens(
     function(xs) {
