@@ -101,4 +101,50 @@ describe('Tscope', function(){
                      {center: {x: 2, y: 6}, radius: 3}]});
     });
   });
+
+  describe('Cursor', function() {
+    var data = {deep: {data: 1}};
+    var lens = Tscope.attr('deep', 'data')
+
+    it('works', function() {
+      var deepCursor = Tscope.dataCursor(data, lens);
+      assert.equal(1, deepCursor.get());
+      deepCursor.set(2);
+      assert.equal(2, deepCursor.get());
+      deepCursor.mod(function (x) {return x + 1});
+      assert.equal(3, deepCursor.get());
+    });
+    
+    it('composes', function() {
+      var fullCursor = Tscope.dataCursor(data);
+      var deepCursor = fullCursor.then(lens);
+      assert.equal(1, deepCursor.get());
+    });
+  });
+
+  describe('Traversed cursors', function() {
+    var data = [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}];
+    var traverse = Tscope.traversed(Tscope.attr('x'));
+    var fullCursor, cursor;
+
+    beforeEach(function reset(){
+      fullCursor = Tscope.dataCursor(data);
+      cursor = fullCursor.then(traverse);
+    });
+
+    it('get traversed x', function() {
+      assert.deepEqual(cursor(), [0, 1, 2]);
+    });
+
+    it('set traversed x', function() {
+      cursor([1, 3, 5]);
+      assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 3, y: 8}, {x: 5, y: 7}]);
+    });
+
+    it('modifies values over traversed x', function() {
+      var incr = function(x){return x + 1};
+      cursor.mod(function (xs) {return xs.map(incr)});
+      assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 2, y: 8}, {x: 3, y: 7}]);
+    });
+  });
 })

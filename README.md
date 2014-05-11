@@ -35,3 +35,39 @@ var traverse = Tscope.attr('array').then(Tscope.traversed(Tscope.attr('x')));
 traverse(data); //=> [0, 1, 2]
 traverse(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 ```
+
+# Cursors
+
+Tscope also provides cursors which are lenses enclosed over data or root accessors. Cursors a handy self-contained object to pass around:
+
+```javascript
+var data = {some: deep: 1};
+var full = Tscope.dataCursor(data);
+var cursor = full.then(Tscope.attr('some', 'deep'));
+// Or
+var cursor = Tscope.dataCursor(data, Tscope.attr('some', 'deep'));
+
+// Access
+cursor() //=> 1
+cursor.get() //=> 1
+
+// Modify
+cursor(42)
+cursor.set(42)
+cursor() //=> 42
+full() //=> {some: deep: 42}
+// All data are handled as immutable so original data is still:
+data   //=> {some: deep: 1}
+```
+
+Tscope also provides low-level `Tscope.makeCursor(getter, setter, [lens])`. For example, this way it can be used with react.js:
+
+```javascript
+var that = this;
+var full = Tscope.makeCursor(
+    function () {return that.state},
+    function (value) {return that.setState(value)}
+);
+var deepCursor = full.then(Tscope.attr('some', 'deep'));
+// ... pass it to child component
+```
