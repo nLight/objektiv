@@ -63,4 +63,42 @@ describe('Tscope', function(){
       assert.deepEqual(Tscope.at(0).set(data, 5), Tscope.at(0)(data, 5));
     });
   });
+
+  describe('Traversal', function() {
+      var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
+      var traverse = Tscope.attr('array').then(Tscope.traversed(Tscope.attr('x')));
+
+      it('get traversed x', function() {
+          assert.deepEqual(traverse(data), [0, 1, 2]);
+      });
+
+      it('set traversed x', function() {
+          assert.deepEqual(traverse(data, 6), {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]});
+      });
+
+      it('modifies values over traversed x', function() {
+        var incr = function(x){return x + 1};
+        assert.deepEqual(traverse.mod(data, incr), {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]});
+      });
+  });
+
+  describe('Traversal composition', function() {
+      var data = {circles: [{center: {x: 0, y: 9}, radius: 1},
+                            {center: {x: 1, y: 8}, radius: 2},
+                            {center: {x: 2, y: 7}, radius: 3}]};
+      var traverse = Tscope.attr('circles').then(Tscope.traversed(Tscope.attr('center'))).then(Tscope.traversed(Tscope.attr('y')));
+
+      it('get traversed x', function() {
+          assert.deepEqual(traverse(data), [9, 8, 7]);
+      });
+
+      it('modifies values over traversed x', function() {
+        var decr = function(x){return x - 1};
+        assert.deepEqual(
+            traverse.mod(data, decr), 
+            {circles: [{center: {x: 0, y: 8}, radius: 1},
+                       {center: {x: 1, y: 7}, radius: 2},
+                       {center: {x: 2, y: 6}, radius: 3}]});
+      });
+  });
 })

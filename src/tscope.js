@@ -34,7 +34,11 @@ Tscope.makeLens = function(getter, setter){
   f.set = setter; // l(a, val) = l.set(a,val);
   
   f.mod = function (a, f) { 
-    return setter(a, f(getter(a))); 
+    var _val = getter(a);
+    if (!Array.isArray(_val))
+        return setter(a, f(_val)); 
+    else 
+        return setter(a, _val.map(f));
   };
 
   f.then = function() {
@@ -108,6 +112,22 @@ Tscope.makeAll = function() {
     var f = arguments[i];
     Tscope.o[f] = Tscope.attr(f);
   };
+}
+
+Tscope.traversed = function(lens){
+    var _l = Tscope.makeLens(
+      function(xs) {
+        return xs.map(function(x){return lens(x)});
+      },
+      function(xs, vals) {
+        if (!Array.isArray(vals))
+          return xs.map(function(x){return lens(x, vals)});
+        else
+          return xs.map(function(x,i){return lens(x, vals[i])});          
+      }
+    );
+
+    return _l;
 }
 
 module.exports = Tscope;
