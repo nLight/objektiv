@@ -6,10 +6,12 @@ function extend(obj) {
           if (!obj[prop] || obj[prop].constructor === Object) {
             obj[prop] = obj[prop] || {};
             extend(obj[prop], source[prop]);
-          } else {
+          } 
+          else {
             obj[prop] = source[prop];
           }
-        } else {
+        } 
+        else {
           obj[prop] = source[prop];
         }
       }
@@ -35,10 +37,12 @@ Tscope.makeLens = function(getter, setter){
   
   f.mod = function (a, f) { 
     var _val = getter(a);
-    if (!Array.isArray(_val))
-        return setter(a, f(_val)); 
-    else 
-        return setter(a, _val.map(f));
+    if (!Array.isArray(_val)){
+      return setter(a, f(_val)); 
+    } 
+    else {
+      return setter(a, _val.map(f));
+    }
   };
 
   f.then = function() {
@@ -115,19 +119,21 @@ Tscope.makeAll = function() {
 }
 
 Tscope.traversed = function(lens){
-    var _l = Tscope.makeLens(
-      function(xs) {
-        return xs.map(function(x){return lens(x)});
-      },
-      function(xs, vals) {
-        if (!Array.isArray(vals))
-          return xs.map(function(x){return lens(x, vals)});
-        else
-          return xs.map(function(x,i){return lens(x, vals[i])});          
+  var _l = Tscope.makeLens(
+    function(xs) {
+      return xs.map(function(x){return lens(x)});
+    },
+    function(xs, vals) {
+      if (!Array.isArray(vals)){
+        return xs.map(function(x){return lens(x, vals)});
       }
-    );
+      else {
+        return xs.map(function(x,i){return lens(x, vals[i])});
+      }
+    }
+  );
 
-    return _l;
+  return _l;
 }
 
 module.exports = Tscope;
