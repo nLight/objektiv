@@ -103,6 +103,8 @@ Tscope.attr = function(name) {
         return o;
       }
     );
+    
+    Tscope.lenses[name] = _l;
 
     return _l;
   }
