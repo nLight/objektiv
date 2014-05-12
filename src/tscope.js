@@ -54,9 +54,17 @@ Tscope.makeLens = function(getter, setter){
 Tscope.at = function(i) {
   var _l = Tscope.makeLens(
     function(a) {
+      if(typeof a[i] === 'undefined') {
+        throw TypeError("Element with index " + i + " not found in the array!");
+      }
+      
       return a[i];
     },
     function(a, val) {
+      if(typeof a[i] === 'undefined') {
+        throw TypeError("Element with index " + i + " not found in the array!");
+      }
+
       var _a = a.slice(0);
       _a[i] = val;
       return _a;
@@ -74,9 +82,17 @@ Tscope.attr = function(name) {
 
     var _l = Tscope.makeLens(
       function(a) {
+        if (!a.hasOwnProperty(name)) {
+          throw TypeError("Property '" + name + "' doesn't exist!");
+        }
+
         return a[name];
       },
       function(a, val) {
+        if (!a.hasOwnProperty(name)) {
+          throw TypeError("Property '" + name + "' doesn't exist!");
+        }
+
         var o = copyObject(a || {});
         o[name] = val;
         return o;

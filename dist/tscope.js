@@ -75,9 +75,17 @@ Tscope.attr = function(name) {
 
     var _l = Tscope.makeLens(
       function(a) {
+        if (!a.hasOwnProperty(name)) {
+          throw Error("Property '" + name + "' doesn't exist!");
+        }
+
         return a[name];
       },
       function(a, val) {
+        if (!a.hasOwnProperty(name)) {
+          throw Error("Property '" + name + "' doesn't exist!");
+        }
+
         var o = copyObject(a || {});
         o[name] = val;
         return o;
