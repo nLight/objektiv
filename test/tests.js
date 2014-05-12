@@ -13,7 +13,7 @@ describe('Tscope', function(){
   describe('Object property', function(){
     var data = { someField: 1, someValue: 2 };
 
-    describe('when field name exists', function() {
+    describe('when property exists', function() {
       it('returns value of a property', function(){
         assert.equal(1, Tscope.attr('someField')(data));
       });
@@ -28,7 +28,7 @@ describe('Tscope', function(){
       });
     });
 
-    describe('when field name not found', function() {
+    describe('when property not found', function() {
       it("throws a TypeError on get", function() {
         assert.throws(function(){
           Tscope.attr('not_found').get(data);
@@ -47,6 +47,34 @@ describe('Tscope', function(){
         assert.throws(function(){
           Tscope.attr('not_found').mod(data, incr);
         }, TypeError, "Property 'not_found' doesn't exist!");
+      });
+    });
+  });
+
+  describe('Parial lens', function() {
+    describe('for an object property', function() {
+      var data = { someField: 1, someValue: 2 };
+
+      describe('when property not found', function() {
+        it('returns undefined on get', function() {
+          assert.equal(Tscope.partialAttr('not_found').get(data), undefined);
+        });
+        it('returns unchanged copy on an Object on set', function() {
+          assert.deepEqual(Tscope.partialAttr('not_found').set(data, 1), { someField: 1, someValue: 2 });
+        });
+      });
+    });
+
+    describe('for an array element', function() {
+      var data = [1, 2, 3];
+
+      describe('when an index not found', function() {
+        it('returns undefined on get', function() {
+          assert.equal(Tscope.partialAt(100).get(data), undefined);
+        });
+        it('returns unchanged copy of an array on set', function() {
+          assert.deepEqual(Tscope.partialAt(100).set(data, 1), [1, 2, 3]);
+        });
       });
     });
   });
