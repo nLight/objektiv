@@ -13,7 +13,7 @@ Tscope.makeLens = function(getter, setter){
   var f = function(){
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
-    } 
+    }
     else if(arguments.length == 2) {
       return setter.apply(this, arguments);
     };
@@ -21,9 +21,9 @@ Tscope.makeLens = function(getter, setter){
 
   f.get = getter; // l(a) = l.get(a);
   f.set = setter; // l(a, val) = l.set(a,val);
-  
-  f.mod = function (a, f) { 
-    return setter(a, f(getter(a))); 
+
+  f.mod = function (a, f) {
+    return setter(a, f(getter(a)));
   };
 
   f.then = function() {
@@ -56,7 +56,7 @@ Tscope.at = function(i) {
       return _a;
     }
   );
-  
+
   return _l;
 };
 
@@ -64,7 +64,7 @@ Tscope.attr = function(name) {
   var createLens = function (name) {
     if (Tscope.o.hasOwnProperty(name)) {
       return Tscope.o[name];
-    };
+    }
 
     var _l = Tscope.makeLens(
       function(a) {
@@ -84,7 +84,7 @@ Tscope.attr = function(name) {
 
   if (arguments.length == 1) {
     return l;
-  } 
+  }
   else {
     return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
       return lens.then(createLens(name));
@@ -99,33 +99,31 @@ Tscope.full = Tscope.makeLens(
 
 
 /// Traversals
-Tscope.makeTraversal = function (listLenses) {
+Tscope.makeTraversal = function (base, item) {
+  item = item || Tscope.full;
+
   var t = {};
   t.list = function (a) {
-    return listLenses(a).map(function (lens) { return lens.get(a) });
+    var list = base.get(a);
+    return list.map(item.get || item.list);
   }
   t.mod = function (a, f) {
-    return listLenses(a).reduce(function (prev, lens) {
-      return lens.mod(prev, f);
-    }, a);
+    var source = base.get(a);
+    var list = source.map(function (x) { return item.mod(x, f) });
+    return base.set(a, list);
   }
   t.set = function (a, value) {
     return t.mod(a, function () { return value })
   }
 
   t.then = function () {
+    return Tscope.makeTraversal(base, item.then.apply(null, arguments));
+  }
+  t.traversal = function () {
+    return Tscope.makeTraversal(base, Tscope.makeTraversal(item));
   }
 
   return t;
-}
-
-Tscope.lensTraversal = function (base, item) {
-  return Tscope.makeTraversal(function (a) {
-    var list = base.get(a);
-    return list.map(function (_, i) {
-      return base.then(Tscope.at(i).then(item));
-    })
-  })
 }
 
 

@@ -41,7 +41,7 @@ describe('Tscope', function(){
 
   describe('Composition', function() {
     var data = { someField: [1, 2, {foo: 10}] };
-    
+
     it('Composes two lenses', function() {
       assert.deepEqual(1,  Tscope.attr('someField').then(Tscope.at(0))(data));
     });
@@ -66,7 +66,7 @@ describe('Tscope', function(){
 
   describe('Traversal', function() {
     var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-    var traverse = Tscope.lensTraversal(Tscope.attr('array'), Tscope.attr('x'));
+    var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
 
     it('get traversed x', function() {
       assert.deepEqual(traverse.list(data), [0, 1, 2]);
@@ -86,7 +86,7 @@ describe('Tscope', function(){
     var data = {circles: [{center: {x: 0, y: 9}, radius: 1},
                           {center: {x: 1, y: 8}, radius: 2},
                           {center: {x: 2, y: 7}, radius: 3}]};
-    var traverse = Tscope.lensTraversal(Tscope.attr('circles'), Tscope.attr('center'))
+    var traverse = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'))
                          .then(Tscope.attr('y'));
 
     it('get traversed x', function() {
@@ -96,34 +96,38 @@ describe('Tscope', function(){
     it('modifies values over traversed x', function() {
       var decr = function(x){return x - 1};
       assert.deepEqual(
-          traverse.mod(data, decr), 
+          traverse.mod(data, decr),
           {circles: [{center: {x: 0, y: 8}, radius: 1},
                      {center: {x: 1, y: 7}, radius: 2},
                      {center: {x: 2, y: 6}, radius: 3}]});
     });
   });
 
-  // describe('Nested traversals', function() {
-  //   var users = {
-  //     users: [
-  //       { friends: [{name: 'Bob'}, {name: 'Alice'}] },
-  //       { friends: [{name: 'Bob'}, {name: 'Josh'}, {name: 'Bill'}] }
-  //     ]
-  //   };
-   
-  //   var traversal = Tscope.lensTraversal(Tscope.attr('users'), Tscope.attr('friends'));
-  //   var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
- 
-  //   it('modify data', function(done) {
-  //     var toUpper = function (s) { return s.toUpperCase() }
-  //     assert.deepEqual(deepTraversal.list(users, toUpper), {
-  //       users: [
-  //         { friends: [{name: 'BOB'}, {name: 'ALICE'}] },
-  //         { friends: [{name: 'BOB'}, {name: 'JOSH'}, {name: 'BILL'}] }
-  //       ]
-  //     });
-  //   });
-  // });
+  describe('Nested traversals', function() {
+    var users = {
+      users: [
+        { friends: [{name: 'Bob'}, {name: 'Alice'}] },
+        { friends: [{name: 'Bob'}, {name: 'Josh'}, {name: 'Bill'}] }
+      ]
+    };
+
+    var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
+    var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
+
+    it('list data', function() {
+      assert.deepEqual(deepTraversal.list(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
+    });
+
+    it('modify data', function() {
+      var toUpper = function (s) { return s.toUpperCase() }
+      assert.deepEqual(deepTraversal.mod(users, toUpper), {
+        users: [
+          { friends: [{name: 'BOB'}, {name: 'ALICE'}] },
+          { friends: [{name: 'BOB'}, {name: 'JOSH'}, {name: 'BILL'}] }
+        ]
+      });
+    });
+  });
 
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
@@ -137,7 +141,7 @@ describe('Tscope', function(){
       deepCursor.mod(function (x) {return x + 1});
       assert.equal(3, deepCursor.get());
     });
-    
+
     it('composes', function() {
       var fullCursor = Tscope.dataCursor(data);
       var deepCursor = fullCursor.then(lens);
