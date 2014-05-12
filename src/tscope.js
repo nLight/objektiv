@@ -99,26 +99,33 @@ Tscope.full = Tscope.makeLens(
 
 
 /// Traversals
-Tscope.makeTraversal = function (base, item) {
+Tscope.makeTraversal = function (listLenses) {
   var t = {};
   t.list = function (a) {
-    var list = base.get(a);
-    return list.map(item.get);
+    return listLenses(a).map(function (lens) { return lens.get(a) });
   }
   t.mod = function (a, f) {
-    var source = base.get(a);
-    var list = source.map(function (x) { return item.mod(x, f) });
-    return base.set(a, list);
+    return listLenses(a).reduce(function (prev, lens) {
+      return lens.mod(prev, f);
+    }, a);
   }
   t.set = function (a, value) {
     return t.mod(a, function () { return value })
   }
 
   t.then = function () {
-    return Tscope.makeTraversal(base, item.then.apply(null, arguments));
   }
 
   return t;
+}
+
+Tscope.lensTraversal = function (base, item) {
+  return Tscope.makeTraversal(function (a) {
+    var list = base.get(a);
+    return list.map(function (_, i) {
+      return base.then(Tscope.at(i).then(item));
+    })
+  })
 }
 
 

@@ -66,7 +66,7 @@ describe('Tscope', function(){
 
   describe('Traversal', function() {
     var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-    var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
+    var traverse = Tscope.lensTraversal(Tscope.attr('array'), Tscope.attr('x'));
 
     it('get traversed x', function() {
       assert.deepEqual(traverse.list(data), [0, 1, 2]);
@@ -86,7 +86,7 @@ describe('Tscope', function(){
     var data = {circles: [{center: {x: 0, y: 9}, radius: 1},
                           {center: {x: 1, y: 8}, radius: 2},
                           {center: {x: 2, y: 7}, radius: 3}]};
-    var traverse = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'))
+    var traverse = Tscope.lensTraversal(Tscope.attr('circles'), Tscope.attr('center'))
                          .then(Tscope.attr('y'));
 
     it('get traversed x', function() {
@@ -111,7 +111,7 @@ describe('Tscope', function(){
   //     ]
   //   };
    
-  //   var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
+  //   var traversal = Tscope.lensTraversal(Tscope.attr('users'), Tscope.attr('friends'));
   //   var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
  
   //   it('modify data', function(done) {
