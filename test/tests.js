@@ -66,14 +66,14 @@ describe('Tscope', function(){
 
   describe('Traversal', function() {
     var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-    var traverse = Tscope.attr('array').then(Tscope.traversed(Tscope.attr('x')));
+    var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
 
     it('get traversed x', function() {
-      assert.deepEqual(traverse(data), [0, 1, 2]);
+      assert.deepEqual(traverse.list(data), [0, 1, 2]);
     });
 
     it('set traversed x', function() {
-      assert.deepEqual(traverse(data, 6), {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]});
+      assert.deepEqual(traverse.set(data, 6), {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]});
     });
 
     it('modifies values over traversed x', function() {
@@ -86,10 +86,11 @@ describe('Tscope', function(){
     var data = {circles: [{center: {x: 0, y: 9}, radius: 1},
                           {center: {x: 1, y: 8}, radius: 2},
                           {center: {x: 2, y: 7}, radius: 3}]};
-    var traverse = Tscope.attr('circles').then(Tscope.traversed(Tscope.attr('center'))).then(Tscope.traversed(Tscope.attr('y')));
+    var traverse = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'))
+                         .then(Tscope.attr('y'));
 
     it('get traversed x', function() {
-      assert.deepEqual(traverse(data), [9, 8, 7]);
+      assert.deepEqual(traverse.list(data), [9, 8, 7]);
     });
 
     it('modifies values over traversed x', function() {
@@ -101,6 +102,28 @@ describe('Tscope', function(){
                      {center: {x: 2, y: 6}, radius: 3}]});
     });
   });
+
+  // describe('Nested traversals', function() {
+  //   var users = {
+  //     users: [
+  //       { friends: [{name: 'Bob'}, {name: 'Alice'}] },
+  //       { friends: [{name: 'Bob'}, {name: 'Josh'}, {name: 'Bill'}] }
+  //     ]
+  //   };
+   
+  //   var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
+  //   var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
+ 
+  //   it('modify data', function(done) {
+  //     var toUpper = function (s) { return s.toUpperCase() }
+  //     assert.deepEqual(deepTraversal.list(users, toUpper), {
+  //       users: [
+  //         { friends: [{name: 'BOB'}, {name: 'ALICE'}] },
+  //         { friends: [{name: 'BOB'}, {name: 'JOSH'}, {name: 'BILL'}] }
+  //       ]
+  //     });
+  //   });
+  // });
 
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
@@ -122,29 +145,29 @@ describe('Tscope', function(){
     });
   });
 
-  describe('Traversed cursors', function() {
-    var data = [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}];
-    var traverse = Tscope.traversed(Tscope.attr('x'));
-    var fullCursor, cursor;
+  // describe('Traversed cursors', function() {
+  //   var data = [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}];
+  //   var traverse = Tscope.traversed(Tscope.attr('x'));
+  //   var fullCursor, cursor;
 
-    beforeEach(function reset(){
-      fullCursor = Tscope.dataCursor(data);
-      cursor = fullCursor.then(traverse);
-    });
+  //   beforeEach(function reset(){
+  //     fullCursor = Tscope.dataCursor(data);
+  //     cursor = fullCursor.then(traverse);
+  //   });
 
-    it('get traversed x', function() {
-      assert.deepEqual(cursor(), [0, 1, 2]);
-    });
+  //   it('get traversed x', function() {
+  //     assert.deepEqual(cursor(), [0, 1, 2]);
+  //   });
 
-    it('set traversed x', function() {
-      cursor([1, 3, 5]);
-      assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 3, y: 8}, {x: 5, y: 7}]);
-    });
+  //   it('set traversed x', function() {
+  //     cursor([1, 3, 5]);
+  //     assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 3, y: 8}, {x: 5, y: 7}]);
+  //   });
 
-    it('modifies values over traversed x', function() {
-      var incr = function(x){return x + 1};
-      cursor.mod(function (xs) {return xs.map(incr)});
-      assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 2, y: 8}, {x: 3, y: 7}]);
-    });
-  });
+  //   it('modifies values over traversed x', function() {
+  //     var incr = function(x){return x + 1};
+  //     cursor.mod(function (xs) {return xs.map(incr)});
+  //     assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 2, y: 8}, {x: 3, y: 7}]);
+  //   });
+  // });
 })
