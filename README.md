@@ -3,10 +3,12 @@ tscope.js [![Build Status](https://travis-ci.org/nLight/tscope.js.svg?branch=mas
 
 Functional lenses in JavaScript
 
+## Basics
+
 `Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed<br>
 `Tscope.at(index)` Array element accessor<br>
 `lens.then(otherLens, ...)` Lens composition can take many arguments<br>
-`Tscope.traversed(lens)` Returns traversed lens
+`lens.traversed([filter])` Returns traversed lens
 
 
 # Regular lenses
@@ -61,7 +63,7 @@ Traversals make working with series of data easy:
 
 ```javascript
 var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var traversal = Tscope.attr('array').traversal(Tscope.attr('x'));
+var traversal = Tscope.attr('array').traversal().then(Tscope.attr('x'));
 
 traversal.get(data); //=> [0, 1, 2]
 traversal.mod(data, incr) //=> {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]}
@@ -69,7 +71,7 @@ traversal.set(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 
 // Nested traversals
 var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
-var traversal = Tscope.attr('users').traversal(Tscope.attr('friends')).traversal()
+var traversal = Tscope.attr('users').traversal().then(Tscope.attr('friends')).traversal()
 
 traversal.get(data)
 //=> [['Alice', 'Bob'], ['Sam']]
@@ -77,10 +79,38 @@ traversal.mod(data, function (s) { return s.toUpperCase() })
 //=> {users: [{id: 1, friends: ['ALICE', 'BOB']}, {id: 2, friends: ['SAM']}]};
 ```
 
+## Filtered traversals
+
+Array elements can be traversed by calling `.traversal([filterFunction])` on a lens that references an array.<br>
+You can pass `filterFunction` in traversal to filter elements of an array or chain `.traversal()).filter(filterFunction)` function.<br>
+Several `.filter()` functions can be chained one after another.
+
+```javascript
+var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
+var filterArray = function (el) { return el.x > 1; }
+var traversal = Tscope.attr('array').traversal(filterArray).then(Tscope.attr('x'));
+// Same as:
+// Tscope.attr('array').traversal().filter(filterArray).then(Tscope.attr('x'));
+
+traversal.get(data); //=> [2]
+traversal.mod(data, incr) //=> {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 3, y: 7}]}
+traversal.set(data, 6) //=> {array: [{x: 0, y:9}, {x: 0, y: 8}, {x: 6, y: 7}]}
+
+// Nested traversals
+var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
+var friendsFilter = function(user) { return user.friends.length == 2; }
+var nameFilter = function(friend) { return friend.length == 3; }
+var traversal = Tscope.attr('users').traversal(friendsFilter).then(Tscope.attr('friends')).traversal(nameFilter);
+
+traversal.get(data)
+//=> [['Bob']]
+traversal.mod(data, function (s) { return s.toUpperCase() })
+//=> {users: [{id: 1, friends: ['Alice', 'BOB']}, {id: 2, friends: ['Sam']}]};
+```
 
 # Cursors
 
-Tscope also provides cursors which are lenses enclosed over data or root accessors. Cursors a handy self-contained object to pass around:
+Tscope also provides cursors which are lenses enclosed over data or root accessors. Cursors a handy self-contained object to pass around. Cursors can be composed and traversed as regular lenses.
 
 ```javascript
 var data = {some: deep: 1};
