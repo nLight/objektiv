@@ -69,7 +69,7 @@ describe('Tscope', function(){
     var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
 
     it('get traversed x', function() {
-      assert.deepEqual(traverse.list(data), [0, 1, 2]);
+      assert.deepEqual(traverse.get(data), [0, 1, 2]);
     });
 
     it('set traversed x', function() {
@@ -90,7 +90,7 @@ describe('Tscope', function(){
                          .then(Tscope.attr('y'));
 
     it('get traversed x', function() {
-      assert.deepEqual(traverse.list(data), [9, 8, 7]);
+      assert.deepEqual(traverse.get(data), [9, 8, 7]);
     });
 
     it('modifies values over traversed x', function() {
@@ -115,7 +115,7 @@ describe('Tscope', function(){
     var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
 
     it('list data', function() {
-      assert.deepEqual(deepTraversal.list(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
+      assert.deepEqual(deepTraversal.get(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
     });
 
     it('modify data', function() {
@@ -149,29 +149,27 @@ describe('Tscope', function(){
     });
   });
 
-  // describe('Traversed cursors', function() {
-  //   var data = [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}];
-  //   var traverse = Tscope.traversed(Tscope.attr('x'));
-  //   var fullCursor, cursor;
+  describe('Traversed cursors', function() {
+    var data = [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}];
+    var fullCursor, cursor;
 
-  //   beforeEach(function reset(){
-  //     fullCursor = Tscope.dataCursor(data);
-  //     cursor = fullCursor.then(traverse);
-  //   });
+    beforeEach(function reset(){
+      fullCursor = Tscope.dataCursor(data);
+      cursor = fullCursor.traversal(Tscope.attr('x'));
+    });
 
-  //   it('get traversed x', function() {
-  //     assert.deepEqual(cursor(), [0, 1, 2]);
-  //   });
+    it('get traversed x', function() {
+      assert.deepEqual(cursor(), [0, 1, 2]);
+    });
 
-  //   it('set traversed x', function() {
-  //     cursor([1, 3, 5]);
-  //     assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 3, y: 8}, {x: 5, y: 7}]);
-  //   });
+    it('set traversed x', function() {
+      cursor(42);
+      assert.deepEqual(fullCursor(), [{x: 42, y: 9}, {x: 42, y: 8}, {x: 42, y: 7}]);
+    });
 
-  //   it('modifies values over traversed x', function() {
-  //     var incr = function(x){return x + 1};
-  //     cursor.mod(function (xs) {return xs.map(incr)});
-  //     assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 2, y: 8}, {x: 3, y: 7}]);
-  //   });
-  // });
+    it('modifies values over traversed x', function() {
+      cursor.mod(function (x) {return x + 1});
+      assert.deepEqual(fullCursor(), [{x: 1, y: 9}, {x: 2, y: 8}, {x: 3, y: 7}]);
+    });
+  });
 })

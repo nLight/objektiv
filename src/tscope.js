@@ -42,6 +42,10 @@ Tscope.makeLens = function(getter, setter){
     });
   }.bind(null, f);
 
+  f.traversal = function (lens) {
+    return Tscope.makeTraversal(f, lens);
+  }
+
   return f;
 };
 
@@ -103,9 +107,9 @@ Tscope.makeTraversal = function (base, item) {
   item = item || Tscope.full;
 
   var t = {};
-  t.list = function (a) {
+  t.get = function (a) {
     var list = base.get(a);
-    return list.map(item.get || item.list);
+    return list.map(item.get);
   }
   t.mod = function (a, f) {
     var source = base.get(a);
@@ -119,8 +123,8 @@ Tscope.makeTraversal = function (base, item) {
   t.then = function () {
     return Tscope.makeTraversal(base, item.then.apply(null, arguments));
   }
-  t.traversal = function () {
-    return Tscope.makeTraversal(base, Tscope.makeTraversal(item));
+  t.traversal = function (lens) {
+    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, lens));
   }
 
   return t;
@@ -139,10 +143,10 @@ Tscope.makeCursor = function(getter, setter, lens) {
     }
   }
   c.get = function() {
-    return lens(getter());
+    return lens.get(getter());
   };
   c.set = function(value) {
-    return setter(lens(getter(), value));
+    return setter(lens.set(getter(), value));
   }
   c.mod = function(f) {
     return setter(lens.mod(getter(), f));
@@ -151,6 +155,9 @@ Tscope.makeCursor = function(getter, setter, lens) {
 
   c.then = function() {
     return Tscope.makeCursor(getter, setter, lens.then.apply(null, arguments));
+  }
+  c.traversal = function (item) {
+    return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, item));
   }
 
   return c;
