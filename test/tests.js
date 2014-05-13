@@ -132,96 +132,6 @@ describe('Tscope', function(){
     });
   });
 
-  describe('Traversal', function() {
-    var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-    var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
-    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x')).filter(function(point){return point.x == 1;});
-
-    it('get traversed x', function() {
-      assert.deepEqual(traverse.get(data), [0, 1, 2]);
-      assert.deepEqual(traverse_with_filter.get(data), [1]);
-    });
-
-    it('set traversed x', function() {
-      assert.deepEqual(traverse.set(data, 6), {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]});
-      assert.deepEqual(traverse_with_filter.set(data, 6), {array: [{x: 0, y:9}, {x: 6, y: 8}, {x: 2, y: 7}]});
-    });
-
-    it('modifies values over traversed x', function() {
-      var incr = function(x){return x + 1};
-      assert.deepEqual(traverse.mod(data, incr), {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]});
-      assert.deepEqual(traverse_with_filter.mod(data, incr), {array: [{x: 0, y:9}, {x: 2, y: 8}, {x: 2, y: 7}]});
-    });
-  });
-
-  describe('Traversal composition', function() {
-    var data = {circles: [{center: {x: 0, y: 9}, radius: 1},
-                          {center: {x: 1, y: 8}, radius: 2},
-                          {center: {x: 2, y: 7}, radius: 3}]};
-    var traverse = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'))
-                         .then(Tscope.attr('y'));
-    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center')).filter(function(circle){return circle.radius == 2;})
-                         .then(Tscope.attr('y'));
-
-    it('get traversed x', function() {
-      assert.deepEqual(traverse.get(data), [9, 8, 7]);
-      assert.deepEqual(traverse_with_filter.get(data), [8]);
-    });
-
-    it('modifies values over traversed x', function() {
-      var decr = function(x){return x - 1};
-      assert.deepEqual(
-          traverse.mod(data, decr),
-          {circles: [{center: {x: 0, y: 8}, radius: 1},
-                     {center: {x: 1, y: 7}, radius: 2},
-                     {center: {x: 2, y: 6}, radius: 3}]});
-      assert.deepEqual(
-          traverse_with_filter.mod(data, decr),
-          {circles: [{center: {x: 0, y: 9}, radius: 1},
-                     {center: {x: 1, y: 7}, radius: 2},
-                     {center: {x: 2, y: 7}, radius: 3}]});
-
-    });
-  });
-
-  describe('Nested traversals', function() {
-    var users = {
-      users: [
-        { friends: [{name: 'Bob', email: 'bob@gmail.com'}, {name: 'Alice', email: 'kitty@example.com'}] },
-        { friends: [{name: 'Bob', email: 'bobby@example.com'}, {name: 'Josh', email: 'josh@gmail.com'}, {name: 'Bill', email: 'bill@gmail.com'}]}
-      ]
-    };
-
-    var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
-    var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
-    var deepTraversal_with_filter = traversal.traversal(null,
-      function(friend){
-        return friend.email.indexOf('gmail.com') != -1
-      }).then(Tscope.attr('name'));
-
-    it('list data', function() {
-      assert.deepEqual(deepTraversal.get(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
-      assert.deepEqual(deepTraversal_with_filter.get(users), [["Bob"],["Josh","Bill"]]);
-    });
-
-    it('modify data', function() {
-      var toUpper = function (s) { return s.toUpperCase() }
-      assert.deepEqual(deepTraversal.mod(users, toUpper), {
-        users: [
-          { friends: [{name: 'BOB', email: 'bob@gmail.com'}, {name: 'ALICE', email: 'kitty@example.com'}] },
-          { friends: [{name: 'BOB', email: 'bobby@example.com'}, {name: 'JOSH', email: 'josh@gmail.com'}, {name: 'BILL', email: 'bill@gmail.com'}]}
-        ]
-      });
-      assert.deepEqual(deepTraversal_with_filter.mod(users, toUpper), {
-        users: [
-          { friends: [{name: 'BOB', email: 'bob@gmail.com'}, {name: 'Alice', email: 'kitty@example.com'}] },
-          { friends: [{name: 'Bob', email: 'bobby@example.com'}, {name: 'JOSH', email: 'josh@gmail.com'}, {name: 'BILL', email: 'bill@gmail.com'}]}
-        ]
-      });
-
-    });
-  });
-
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
     var lens = Tscope.attr('deep', 'data')
@@ -248,7 +158,7 @@ describe('Tscope', function(){
 
     beforeEach(function reset(){
       fullCursor = Tscope.dataCursor(data);
-      cursor = fullCursor.traversal(Tscope.attr('x'));
+      cursor = fullCursor.traversal().then(Tscope.attr('x'));
     });
 
     it('get traversed x', function() {
