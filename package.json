@@ -12,13 +12,28 @@
   },
   "keywords": [
     "Lenses",
-    "Lens"
+    "Lens",
+    "Functional",
+    "Traversals"
   ],
   "devDependencies": {
     "mocha": "~1.18.0",
     "grunt-browserify": "~2.0.0"
   },
-  "author": "Dmitriy Rozhkov",
+  "author": {
+    "name": "Dmitriy Rozhkov",
+    "email": "rojkov.dmitry@gmail.com",
+    "url": "http://nlight.github.io"
+  },
+  "contributors": [
+    {
+      "name": "Alex Schepanovski",
+      "url": "http://hackflow.com"
+    },
+    {
+      "name": "Ilya Beda"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/nLight/tscope.js/issues"
