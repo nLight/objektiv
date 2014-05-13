@@ -130,8 +130,16 @@ Tscope.makeTraversal = function (base, item, pred) {
   t.then = function () {
     return Tscope.makeTraversal(base, item.then.apply(null, arguments), pred);
   }
-  t.traversal = function (pred) {
-    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, undefined, pred));
+  t.traversal = function (lens_or_pred, pred_or_undef) {
+    var _lens, _pred;
+    if (pred_or_undef === undefined){
+      _lens = undefined;
+      _pred = lens_or_pred;
+    } else {
+      _lens = lens_or_pred;
+      _pred = pred_or_undef;
+    }
+    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, _lens, _pred));
   }
 
   return t;
