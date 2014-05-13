@@ -126,9 +126,10 @@ describe('Tscope', function(){
 
     var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
     var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
-    var deepTraversal_with_filter = traversal.traversal(function(friend){
-      return friend.email.indexOf('gmail.com') != -1
-    }).then(Tscope.attr('name'));
+    var deepTraversal_with_filter = traversal.traversal(Tscope.attr('name'),
+      function(friend){
+        return friend.email.indexOf('gmail.com') != -1
+      });
 
     it('list data', function() {
       assert.deepEqual(deepTraversal.get(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
