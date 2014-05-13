@@ -7,6 +7,22 @@ function copyObject(source) {
   return copy;
 }
 
+function composeLenses(lenses) {
+  return lenses.reduce(function(lens1, lens2){
+      return Tscope.makeLens(
+        function(a) {
+          var _a = lens1(a);
+          return lens2(_a);
+        },
+        function(a, val) {
+          var _a = lens1(a);
+          var _val = lens2(_a, val);
+          return lens1(a, _val);
+        }
+      );
+  }, Tscope.full);
+}
+
 var Tscope = {
   lenses:{}, 
   partialLenses:{}
@@ -30,23 +46,11 @@ Tscope.makeLens = function(getter, setter){
   };
 
   f.then = function() {
-    return Array.prototype.slice.call(arguments, 0).reduce(function(lens1, lens2){
-      return Tscope.makeLens(
-        function(a) {
-          var _a = lens1(a);
-          return lens2(_a);
-        },
-        function(a, val) {
-          var _a = lens1(a);
-          var _val = lens2(_a, val);
-          return lens1(a, _val);
-        }
-      );
-    });
+    return composeLenses(Array.prototype.slice.call(arguments));
   }.bind(null, f);
 
-  f.traversal = function (lens) {
-    return Tscope.makeTraversal(f, lens);
+  f.traversal = function (pred) {
+    return Tscope.makeTraversal(f, null, pred);
   }
 
   return f;
@@ -219,17 +223,35 @@ Tscope.full = Tscope.makeLens(
 
 
 /// Traversals
-Tscope.makeTraversal = function (base, item) {
+Tscope.makeTraversal = function (base, item, conds) {
   item = item || Tscope.full;
+  conds = conds || [];
+  if (typeof conds === 'function') {
+    conds = [[conds, Tscope.full]];
+  }
+
+  function condsMatch(el, i) {
+    return conds.every(function (cond) {
+      var pred = cond[0], lens = cond[1];
+      return pred(lens(el), i);
+    })
+  }
 
   var t = {};
   t.get = function (a) {
     var list = base.get(a);
-    return list.map(item.get);
+    return list.filter(condsMatch).map(item.get);
   }
   t.mod = function (a, f) {
     var source = base.get(a);
-    var list = source.map(function (x) { return item.mod(x, f) });
+    var list = source.map(function (x, i) {
+      if (condsMatch(x, i)) {
+        return item.mod(x, f);
+      }
+      else {
+        return x;
+      }
+    });
     return base.set(a, list);
   }
   t.set = function (a, value) {
@@ -237,10 +259,14 @@ Tscope.makeTraversal = function (base, item) {
   }
 
   t.then = function () {
-    return Tscope.makeTraversal(base, item.then.apply(null, arguments));
+    return Tscope.makeTraversal(base, item.then.apply(null, arguments), conds);
   }
-  t.traversal = function (lens) {
-    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, lens));
+  t.traversal = function (pred) {
+    var t = Tscope.makeTraversal(item, null, pred);
+    return Tscope.makeTraversal(base, t, conds);
+  }
+  t.filter = function (pred) {
+    return Tscope.makeTraversal(base, item, conds.concat([[pred, item]]));
   }
 
   return t;
@@ -266,14 +292,13 @@ Tscope.makeCursor = function(getter, setter, lens) {
   }
   c.mod = function(f) {
     return setter(lens.mod(getter(), f));
-    // return c.set(f(c.get()));
   }
 
   c.then = function() {
     return Tscope.makeCursor(getter, setter, lens.then.apply(null, arguments));
   }
-  c.traversal = function (item) {
-    return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, item));
+  c.traversal = function (pred) {
+    return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, null, pred));
   }
 
   return c;
