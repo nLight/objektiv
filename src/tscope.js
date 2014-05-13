@@ -219,19 +219,19 @@ Tscope.full = Tscope.makeLens(
 
 
 /// Traversals
-Tscope.makeTraversal = function (base, item, pred) {
+Tscope.makeTraversal = function (base, item) {
   item = item || Tscope.full;
-  pred = pred || function(){return true;}
 
   var t = {};
+  t.pred = function(){return true;}
   t.get = function (a) {
     var list = base.get(a);
-    return list.filter(pred).map(item.get);
+    return list.filter(t.pred).map(item.get);
   }
   t.mod = function (a, f) {
     var source = base.get(a);
     var list = source.map(function (x) {
-      if (pred(x)){
+      if (t.pred(x)){
         return item.mod(x, f);
       } else {
         return x;
@@ -244,18 +244,19 @@ Tscope.makeTraversal = function (base, item, pred) {
   }
 
   t.then = function () {
-    return Tscope.makeTraversal(base, item.then.apply(null, arguments), pred);
+    return Tscope.makeTraversal(base, item.then.apply(null, arguments)).filter(t.pred);
   }
-  t.traversal = function (lens_or_pred, pred_or_undef) {
-    var _lens, _pred;
-    if (pred_or_undef === undefined){
-      _lens = undefined;
-      _pred = lens_or_pred;
-    } else {
-      _lens = lens_or_pred;
-      _pred = pred_or_undef;
+  t.traversal = function (lens, pred) {
+    var _t = Tscope.makeTraversal(item, lens);
+    if (pred){
+      _t = _t.filter(pred);
     }
-    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, _lens, _pred));
+    return Tscope.makeTraversal(base, _t);
+  }
+  t.filter = function (pred) {
+    var _t = Tscope.makeTraversal(base, item);
+    _t.pred = pred;
+    return _t;
   }
 
   return t;
