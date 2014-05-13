@@ -5,10 +5,10 @@ Functional lenses in JavaScript
 
 [![Build Status](https://travis-ci.org/nLight/tscope.js.svg?branch=master)](https://travis-ci.org/nLight/tscope.js)
 
-`Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed   
-`Tscope.at(index)` Array element accessor   
-`lens.then(otherLens)` Lens composition   
-`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments   
+`Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed
+`Tscope.at(index)` Array element accessor
+`lens.then(otherLens)` Lens composition
+`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments
 `Tscope.traversed(lens)` Returns traversed lens
 
 
@@ -28,13 +28,31 @@ firstOfSome.set(data, 10); //=> { array: [10, 2, 3] }
 var incr = function(x){ return x + 1 };
 firstOfSome.mod(data, incr); //=> { array: [2, 2, 3] }
 
-// Traversal
-var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var traverse = Tscope.attr('array').then(Tscope.traversed(Tscope.attr('x')));
-
-traverse(data); //=> [0, 1, 2]
-traverse(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 ```
+
+
+# Traversals
+
+Traversals make working with series of data easy:
+
+```javascript
+var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
+var traversal = Tscope.attr('array').traversal(Tscope.attr('x'));
+
+traversal.get(data); //=> [0, 1, 2]
+traversal.mod(data, incr) //=> {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]}
+traversal.set(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
+
+// Nested traversals
+var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
+var traversal = Tscope.attr('users').traversal(Tscope.attr('friends')).traversal()
+
+traversal.get(data)
+//=> [['Alice', 'Bob'], ['Sam']]
+traversal.mod(data, function (s) { return s.toUpperCase() })
+//=> {users: [{id: 1, friends: ['ALICE', 'BOB']}, {id: 2, friends: ['SAM']}]};
+```
+
 
 # Cursors
 
