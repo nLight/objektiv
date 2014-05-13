@@ -1,16 +1,17 @@
-tscope.js
-=========
+tscope.js [![Build Status](https://travis-ci.org/nLight/tscope.js.svg?branch=master)](https://travis-ci.org/nLight/tscope.js)
+==================
 
 Functional lenses in JavaScript
 
-[![Build Status](https://travis-ci.org/nLight/tscope.js.svg?branch=master)](https://travis-ci.org/nLight/tscope.js)
-
-`Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed
-`Tscope.at(index)` Array element accessor
-`lens.then(otherLens)` Lens composition
-`lens.then(otherLens, oneMoreLens, ...)` `then()` can take many arguments
+`Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed<br>
+`Tscope.at(index)` Array element accessor<br>
+`lens.then(otherLens, ...)` Lens composition can take many arguments<br>
 `Tscope.traversed(lens)` Returns traversed lens
 
+
+# Regular lenses
+
+Throw TypeError unless element has been found
 
 ```javascript
 var data = { array: [1, 2, 3] };
@@ -27,6 +28,29 @@ firstOfSome.set(data, 10); //=> { array: [10, 2, 3] }
 // Modifier
 var incr = function(x){ return x + 1 };
 firstOfSome.mod(data, incr); //=> { array: [2, 2, 3] }
+
+```
+
+
+# Partial lenses
+
+Skip missing element
+
+```javascript
+var data = { array: [1, 2, 3] };
+var firstOfMissing = Tscope.partialAttr('missing').then(Tscope.partialAt(0));
+
+// Getter returns undefined
+firstOfMissing(data); //=> undefined
+firstOfMissing.get(data); //=> undefined
+
+// Setter returns data unchanged
+firstOfMissing(data, 10); //=> { array: [1, 2, 3] }
+firstOfMissing.set(data, 10); //=> { array: [1, 2, 3] }
+
+// Modifier returns data unchanged
+var incr = function(x){ return x + 1 };
+firstOfMissing.mod(data, incr); //=> { array: [1, 2, 3] }
 
 ```
 
