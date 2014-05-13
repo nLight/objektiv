@@ -67,7 +67,7 @@ describe('Tscope', function(){
   describe('Traversal', function() {
     var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
     var traverse = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'));
-    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x'),function(point){return point.x == 1;});
+    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('array'), Tscope.attr('x')).filter(function(point){return point.x == 1;});
 
     it('get traversed x', function() {
       assert.deepEqual(traverse.get(data), [0, 1, 2]);
@@ -92,7 +92,7 @@ describe('Tscope', function(){
                           {center: {x: 2, y: 7}, radius: 3}]};
     var traverse = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'))
                          .then(Tscope.attr('y'));
-    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center'), function(circle){return circle.radius == 2;})
+    var traverse_with_filter = Tscope.makeTraversal(Tscope.attr('circles'), Tscope.attr('center')).filter(function(circle){return circle.radius == 2;})
                          .then(Tscope.attr('y'));
 
     it('get traversed x', function() {
@@ -126,10 +126,10 @@ describe('Tscope', function(){
 
     var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
     var deepTraversal = traversal.traversal().then(Tscope.attr('name'));
-    var deepTraversal_with_filter = traversal.traversal(Tscope.attr('name'),
+    var deepTraversal_with_filter = traversal.traversal(null,
       function(friend){
         return friend.email.indexOf('gmail.com') != -1
-      });
+      }).then(Tscope.attr('name'));
 
     it('list data', function() {
       assert.deepEqual(deepTraversal.get(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
