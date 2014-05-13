@@ -7,7 +7,10 @@ function copyObject(source) {
   return copy;
 }
 
-var Tscope = {o:{}};
+var Tscope = {
+  lenses:{}, 
+  partialLenses:{}
+};
 
 Tscope.makeLens = function(getter, setter){
   var f = function(){
@@ -49,12 +52,22 @@ Tscope.makeLens = function(getter, setter){
   return f;
 };
 
+
+/// Normal Lenses
 Tscope.at = function(i) {
   var _l = Tscope.makeLens(
     function(a) {
+      if(typeof a[i] === 'undefined') {
+        throw TypeError("Element with index " + i + " not found in the array!");
+      }
+
       return a[i];
     },
     function(a, val) {
+      if(typeof a[i] === 'undefined') {
+        throw TypeError("Element with index " + i + " not found in the array!");
+      }
+
       var _a = a.slice(0);
       _a[i] = val;
       return _a;
@@ -66,20 +79,77 @@ Tscope.at = function(i) {
 
 Tscope.attr = function(name) {
   var createLens = function (name) {
-    if (Tscope.o.hasOwnProperty(name)) {
-      return Tscope.o[name];
-    }
+    if (Tscope.lenses.hasOwnProperty(name)) {
+      return Tscope.lenses[name];
+    };
 
     var _l = Tscope.makeLens(
       function(a) {
+        if (!a.hasOwnProperty(name)) {
+          throw TypeError("Property '" + name + "' doesn't exist!");
+        }
+
         return a[name];
       },
       function(a, val) {
+        if (!a.hasOwnProperty(name)) {
+          throw TypeError("Property '" + name + "' doesn't exist!");
+        }
+
         var o = copyObject(a || {});
         o[name] = val;
         return o;
       }
     );
+    
+    Tscope.lenses[name] = _l;
+
+    return _l;
+  }
+
+  var l = createLens(name);
+
+  if (arguments.length == 1) {
+    return l;
+  } 
+  else {
+    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
+      return lens.then(createLens(name));
+    }, l);
+  }
+};
+
+
+/// Partial Lenses
+Tscope.partialAttr = function(name) {
+  var createLens = function (name) {
+    if (Tscope.partialLenses.hasOwnProperty(name)) {
+      return Tscope.partialLenses[name];
+    };
+
+    var _l = Tscope.makeLens(
+      function(a) {
+        if (typeof a === "undefined") {
+          return undefined;
+        }
+
+        return a[name];
+      },
+      function(a, val) {
+        if (typeof a === "undefined") {
+          return undefined;
+        }
+        else if (!a.hasOwnProperty(name)) {
+          return copyObject(a);
+        }
+
+        var o = copyObject(a || {});
+        o[name] = val;
+        return o;
+      }
+    );
+
+    Tscope.partialLenses[name] = _l;
 
     return _l;
   }
@@ -95,6 +165,52 @@ Tscope.attr = function(name) {
     }, l);
   }
 };
+
+Tscope.partialAt = function(i) {
+  var _l = Tscope.makeLens(
+    function(a) {
+      if(typeof a === 'undefined' || typeof a[i] === 'undefined') {
+        return undefined;
+      }
+
+      return a[i];
+    },
+    function(a, val) {
+      if(typeof a === 'undefined') {
+        return undefined;
+      }
+      else if (typeof a[i] === 'undefined') {
+        return a.slice(0);
+      }
+
+      var _a = a.slice(0);
+      _a[i] = val;
+      return _a;
+    }
+  );
+  
+  return _l;
+};
+
+
+/// Traversals
+Tscope.traversed = function(lens){
+  var _l = Tscope.makeLens(
+    function(xs) {
+      return xs.map(function(x){return lens(x)});
+    },
+    function(xs, vals) {
+      if (!Array.isArray(vals)){
+        return xs.map(function(x){return lens(x, vals)});
+      }
+      else {
+        return xs.map(function(x,i){return lens(x, vals[i])});
+      }
+    }
+  );
+
+  return _l;
+}
 
 Tscope.full = Tscope.makeLens(
   function(a) {return a},
