@@ -13,7 +13,7 @@ Tscope.makeLens = function(getter, setter){
   var f = function(){
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
-    } 
+    }
     else if(arguments.length == 2) {
       return setter.apply(this, arguments);
     };
@@ -21,15 +21,9 @@ Tscope.makeLens = function(getter, setter){
 
   f.get = getter; // l(a) = l.get(a);
   f.set = setter; // l(a, val) = l.set(a,val);
-  
-  f.mod = function (a, f) { 
-    var _val = getter(a);
-    if (!Array.isArray(_val)){
-      return setter(a, f(_val)); 
-    } 
-    else {
-      return setter(a, _val.map(f));
-    }
+
+  f.mod = function (a, f) {
+    return setter(a, f(getter(a)));
   };
 
   f.then = function() {
@@ -48,6 +42,10 @@ Tscope.makeLens = function(getter, setter){
     });
   }.bind(null, f);
 
+  f.traversal = function (lens) {
+    return Tscope.makeTraversal(f, lens);
+  }
+
   return f;
 };
 
@@ -62,7 +60,7 @@ Tscope.at = function(i) {
       return _a;
     }
   );
-  
+
   return _l;
 };
 
@@ -70,7 +68,7 @@ Tscope.attr = function(name) {
   var createLens = function (name) {
     if (Tscope.o.hasOwnProperty(name)) {
       return Tscope.o[name];
-    };
+    }
 
     var _l = Tscope.makeLens(
       function(a) {
@@ -90,7 +88,7 @@ Tscope.attr = function(name) {
 
   if (arguments.length == 1) {
     return l;
-  } 
+  }
   else {
     return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
       return lens.then(createLens(name));
@@ -98,28 +96,39 @@ Tscope.attr = function(name) {
   }
 };
 
-Tscope.traversed = function(lens){
-  var _l = Tscope.makeLens(
-    function(xs) {
-      return xs.map(function(x){return lens(x)});
-    },
-    function(xs, vals) {
-      if (!Array.isArray(vals)){
-        return xs.map(function(x){return lens(x, vals)});
-      }
-      else {
-        return xs.map(function(x,i){return lens(x, vals[i])});
-      }
-    }
-  );
-
-  return _l;
-}
-
 Tscope.full = Tscope.makeLens(
   function(a) {return a},
   function(a, val) {return val}
 );
+
+
+/// Traversals
+Tscope.makeTraversal = function (base, item) {
+  item = item || Tscope.full;
+
+  var t = {};
+  t.get = function (a) {
+    var list = base.get(a);
+    return list.map(item.get);
+  }
+  t.mod = function (a, f) {
+    var source = base.get(a);
+    var list = source.map(function (x) { return item.mod(x, f) });
+    return base.set(a, list);
+  }
+  t.set = function (a, value) {
+    return t.mod(a, function () { return value })
+  }
+
+  t.then = function () {
+    return Tscope.makeTraversal(base, item.then.apply(null, arguments));
+  }
+  t.traversal = function (lens) {
+    return Tscope.makeTraversal(base, Tscope.makeTraversal(item, lens));
+  }
+
+  return t;
+}
 
 
 /// Cursors
@@ -134,19 +143,21 @@ Tscope.makeCursor = function(getter, setter, lens) {
     }
   }
   c.get = function() {
-    return lens(getter());
+    return lens.get(getter());
   };
   c.set = function(value) {
-    return setter(lens(getter(), value));
+    return setter(lens.set(getter(), value));
   }
   c.mod = function(f) {
-    return c.set(f(c.get()));
+    return setter(lens.mod(getter(), f));
+    // return c.set(f(c.get()));
   }
 
   c.then = function() {
     return Tscope.makeCursor(getter, setter, lens.then.apply(null, arguments));
-    // var lenses = [].slice.call(arguments);
-    // return Tscope.makeCursor(getter, setter, lens.then.call(lens, lenses));
+  }
+  c.traversal = function (item) {
+    return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, item));
   }
 
   return c;
