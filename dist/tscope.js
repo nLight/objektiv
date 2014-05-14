@@ -59,6 +59,11 @@ Tscope.makeLens = function(getter, setter){
 
 
 /// Normal Lenses
+Tscope.full = Tscope.makeLens(
+  function(a) {return a},
+  function(a, val) {return val}
+);
+
 Tscope.at = function(i) {
   var _l = Tscope.makeLens(
     function(a) {
@@ -196,31 +201,6 @@ Tscope.partialAt = function(i) {
   
   return _l;
 };
-
-
-/// Traversals
-Tscope.traversed = function(lens){
-  var _l = Tscope.makeLens(
-    function(xs) {
-      return xs.map(function(x){return lens(x)});
-    },
-    function(xs, vals) {
-      if (!Array.isArray(vals)){
-        return xs.map(function(x){return lens(x, vals)});
-      }
-      else {
-        return xs.map(function(x,i){return lens(x, vals[i])});
-      }
-    }
-  );
-
-  return _l;
-}
-
-Tscope.full = Tscope.makeLens(
-  function(a) {return a},
-  function(a, val) {return val}
-);
 
 
 /// Traversals
