@@ -23,10 +23,7 @@ function composeLenses(lenses) {
   }, Tscope.full);
 }
 
-var Tscope = {
-  lenses:{}, 
-  partialLenses:{}
-};
+var Tscope = {};
 
 Tscope.makeLens = function(getter, setter){
   var f = function(){
@@ -87,92 +84,50 @@ Tscope.at = function(i) {
 };
 
 Tscope.attr = function(name) {
-  var createLens = function (name) {
-    if (Tscope.lenses.hasOwnProperty(name)) {
-      return Tscope.lenses[name];
-    };
-
-    var _l = Tscope.makeLens(
-      function(a) {
-        if (!a.hasOwnProperty(name)) {
-          throw TypeError("Property '" + name + "' doesn't exist!");
-        }
-
-        return a[name];
-      },
-      function(a, val) {
-        if (!a.hasOwnProperty(name)) {
-          throw TypeError("Property '" + name + "' doesn't exist!");
-        }
-
-        var o = copyObject(a || {});
-        o[name] = val;
-        return o;
+  return Tscope.makeLens(
+    function(a) {
+      if (!a.hasOwnProperty(name)) {
+        throw TypeError("Property '" + name + "' doesn't exist!");
       }
-    );
-    
-    Tscope.lenses[name] = _l;
 
-    return _l;
-  }
+      return a[name];
+    },
+    function(a, val) {
+      if (!a.hasOwnProperty(name)) {
+        throw TypeError("Property '" + name + "' doesn't exist!");
+      }
 
-  var l = createLens(name);
-
-  if (arguments.length == 1) {
-    return l;
-  } 
-  else {
-    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
-      return lens.then(createLens(name));
-    }, l);
-  }
+      var o = copyObject(a || {});
+      o[name] = val;
+      return o;
+    }
+  );
 };
 
 
 /// Partial Lenses
 Tscope.partialAttr = function(name) {
-  var createLens = function (name) {
-    if (Tscope.partialLenses.hasOwnProperty(name)) {
-      return Tscope.partialLenses[name];
-    };
-
-    var _l = Tscope.makeLens(
-      function(a) {
-        if (typeof a === "undefined") {
-          return undefined;
-        }
-
-        return a[name];
-      },
-      function(a, val) {
-        if (typeof a === "undefined") {
-          return undefined;
-        }
-        else if (!a.hasOwnProperty(name)) {
-          return copyObject(a);
-        }
-
-        var o = copyObject(a || {});
-        o[name] = val;
-        return o;
+  return Tscope.makeLens(
+    function(a) {
+      if (typeof a === "undefined") {
+        return undefined;
       }
-    );
 
-    Tscope.partialLenses[name] = _l;
+      return a[name];
+    },
+    function(a, val) {
+      if (typeof a === "undefined") {
+        return undefined;
+      }
+      else if (!a.hasOwnProperty(name)) {
+        return copyObject(a);
+      }
 
-    return _l;
-  }
-
-  var l = createLens(name);
-
-  if (arguments.length == 1) {
-    return l;
-  }
-  else {
-    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
-      return lens.then(createLens(name));
-    }, l);
-  }
+      var o = copyObject(a || {});
+      o[name] = val;
+      return o;
+    }
+  );
 };
 
 Tscope.partialAt = function(i) {
@@ -197,7 +152,7 @@ Tscope.partialAt = function(i) {
       return _a;
     }
   );
-  
+
   return _l;
 };
 

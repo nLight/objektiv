@@ -4,10 +4,6 @@ var Tscope = require("../src/tscope")
 describe('Tscope', function(){
   describe('#attr', function() {
     var data = { deep: {data: {structure: 1}} };
-
-    it('takes arbitrary number of arguments', function() {
-      assert.equal(1, Tscope.attr('deep', 'data', 'structure').get(data));
-    });
   });
 
   describe('Object property', function(){
@@ -89,7 +85,7 @@ describe('Tscope', function(){
 
       it('sets a value of a property', function() {
         assert.deepEqual(Tscope.at(1)(data, 4), [1, 4, 3]);
-      });      
+      });
     });
 
     describe('when element with index not exists in array', function() {
@@ -103,7 +99,7 @@ describe('Tscope', function(){
         assert.throws(function(){
           Tscope.at(100).set(data, 1);
         }, TypeError, "Property 'not_found' doesn't exist!");
-      });      
+      });
     });
   });
 
@@ -134,7 +130,7 @@ describe('Tscope', function(){
 
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
-    var lens = Tscope.attr('deep', 'data')
+    var lens = Tscope.attr('deep').then(Tscope.attr('data'));
 
     it('works', function() {
       var deepCursor = Tscope.dataCursor(data, lens);
