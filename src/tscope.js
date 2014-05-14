@@ -23,7 +23,7 @@ function composeLenses(lenses) {
   }, Tscope.full);
 }
 
-var Tscope = {};
+var Tscope = {resolve: {}};
 
 Tscope.makeLens = function(getter, setter){
   var f = function(){
@@ -54,106 +54,115 @@ Tscope.makeLens = function(getter, setter){
 };
 
 
+/// Resolvers
+Tscope.resolve.strict = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) throw e;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      if (e) throw e;
+      return actions.set(a, val);
+    }
+  );
+}
+
+Tscope.resolve.pass = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) return undefined;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      if (e) return a;
+      return actions.set(a, val);
+    }
+  );
+}
+
+Tscope.resolve.tryhard = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) return undefined;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      // NOTE: shouldn't examine a and val here,
+      //       ideally any action should be derived from error
+      if (!e || typeof a !== "undefined" && typeof val !== "undefined") {
+        return actions.set(a, val);
+      } else {
+        return a;
+      }
+    }
+  );
+}
+
+
 /// Normal Lenses
 Tscope.full = Tscope.makeLens(
   function(a) {return a},
   function(a, val) {return val}
 );
 
-Tscope.at = function(i) {
-  var _l = Tscope.makeLens(
-    function(a) {
-      if(typeof a[i] === 'undefined') {
-        throw TypeError("Element with index " + i + " not found in the array!");
-      }
-
-      return a[i];
-    },
-    function(a, val) {
-      if(typeof a[i] === 'undefined') {
-        throw TypeError("Element with index " + i + " not found in the array!");
-      }
-
-      var _a = a.slice(0);
-      _a[i] = val;
-      return _a;
-    }
-  );
-
-  return _l;
+Tscope.at = function(i, resolver) {
+  return (resolver || Tscope.resolve.strict)({
+      check: function (a) {
+        if (typeof a === "undefined") {
+          return TypeError("Data is undefined!");
+        }
+        else if (typeof a[i] === "undefined") {
+          return TypeError("Element with index " + i + " not found in the array!");
+        }
+      },
+      get: function (a) {
+        return a[i];
+      },
+      set: function (a, val) {
+        var _a = a.slice();
+        _a[i] = val;
+        return _a;
+      },
+  });
 };
 
-Tscope.attr = function(name) {
-  return Tscope.makeLens(
-    function(a) {
-      if (!a.hasOwnProperty(name)) {
-        throw TypeError("Property '" + name + "' doesn't exist!");
-      }
 
+Tscope.attr = function(name, resolver) {
+  return (resolver || Tscope.resolve.strict)({
+    check: function (a) {
+      if (typeof a === "undefined") {
+        return TypeError("Data is undefined!");
+      }
+      else if (!a.hasOwnProperty(name)) {
+        return TypeError("Property '" + name + "' doesn't exist!");
+      }
+    },
+    get: function (a) {
       return a[name];
     },
-    function(a, val) {
-      if (!a.hasOwnProperty(name)) {
-        throw TypeError("Property '" + name + "' doesn't exist!");
-      }
-
-      var o = copyObject(a || {});
+    set: function (a, val) {
+      var o = copyObject(a);
       o[name] = val;
       return o;
-    }
-  );
+    },
+  });
 };
 
 
 /// Partial Lenses
-Tscope.partialAttr = function(name) {
-  return Tscope.makeLens(
-    function(a) {
-      if (typeof a === "undefined") {
-        return undefined;
-      }
-
-      return a[name];
-    },
-    function(a, val) {
-      if (typeof a === "undefined") {
-        return undefined;
-      }
-      else if (!a.hasOwnProperty(name)) {
-        return copyObject(a);
-      }
-
-      var o = copyObject(a || {});
-      o[name] = val;
-      return o;
-    }
-  );
-};
+Tscope.partialAttr = function (name) {
+  return Tscope.attr(name, Tscope.resolve.pass);
+}
 
 Tscope.partialAt = function(i) {
-  var _l = Tscope.makeLens(
-    function(a) {
-      if(typeof a === 'undefined' || typeof a[i] === 'undefined') {
-        return undefined;
-      }
-
-      return a[i];
-    },
-    function(a, val) {
-      if(typeof a === 'undefined') {
-        return undefined;
-      }
-      else if (typeof a[i] === 'undefined') {
-        return a.slice(0);
-      }
-
-      var _a = a.slice(0);
-      _a[i] = val;
-      return _a;
-    }
-  );
-
-  return _l;
+  return Tscope.at(i, Tscope.resolve.pass);
 };
 
 

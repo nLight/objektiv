@@ -47,7 +47,7 @@ describe('Tscope', function(){
     });
   });
 
-  describe('Parial lens', function() {
+  describe('Partial lens', function() {
     describe('for an object property', function() {
       var data = { someField: 1, someValue: 2 };
 
@@ -71,6 +71,35 @@ describe('Tscope', function(){
         it('returns unchanged copy of an array on set', function() {
           assert.deepEqual(Tscope.partialAt(100).set(data, 1), [1, 2, 3]);
         });
+      });
+    });
+  });
+
+  describe('Tryhard resolver', function() {
+    var data = { some: 1 };
+    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+
+    describe('when property not found', function() {
+      it('returns undefined on get', function() {
+        assert.equal(lens.get(data), undefined);
+      });
+      it('creates attr on set', function() {
+        assert.deepEqual(lens.set(data, 1), {some: 1, not_found: 1});
+      });
+    });
+  });
+
+  describe('Deep tryhard resolver', function() {
+    var data = { some: 1 };
+    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var deep = lens.then(lens);
+
+    describe('when property not found', function() {
+      it('returns undefined on get', function() {
+        assert.equal(deep.get(data), undefined);
+      });
+      it('does nothing on set', function() {
+        assert.deepEqual(deep.set(data, 1), {some: 1});
       });
     });
   });
