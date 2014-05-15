@@ -17,7 +17,7 @@ Throw TypeError unless element has been found
 
 ```javascript
 var data = { array: [1, 2, 3] };
-var firstOfSome = Tscope.attr('array').then(Tscope.at(0));
+var firstOfSome = Tscope.attr('array').at(0);
 
 // Getter
 firstOfSome(data); //=> 1
@@ -40,7 +40,7 @@ Skip missing element
 
 ```javascript
 var data = { array: [1, 2, 3] };
-var firstOfMissing = Tscope.partialAttr('missing').then(Tscope.partialAt(0));
+var firstOfMissing = Tscope.partialAttr('missing').partialAt(0);
 
 // Getter returns undefined
 firstOfMissing(data); //=> undefined
@@ -63,7 +63,7 @@ Traversals make working with series of data easy:
 
 ```javascript
 var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var traversal = Tscope.attr('array').traversal().then(Tscope.attr('x'));
+var traversal = Tscope.attr('array').traversal().attr('x');
 
 traversal.get(data); //=> [0, 1, 2]
 traversal.mod(data, incr) //=> {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]}
@@ -71,7 +71,7 @@ traversal.set(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 
 // Nested traversals
 var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
-var traversal = Tscope.attr('users').traversal().then(Tscope.attr('friends')).traversal()
+var traversal = Tscope.attr('users').traversal().attr('friends').traversal()
 
 traversal.get(data)
 //=> [['Alice', 'Bob'], ['Sam']]
@@ -81,16 +81,16 @@ traversal.mod(data, function (s) { return s.toUpperCase() })
 
 ## Filtered traversals
 
-Array elements can be traversed by calling `.traversal([filterFunction])` on a lens that references an array.<br>
-You can pass `filterFunction` in traversal to filter elements of an array or chain `.traversal()).filter(filterFunction)` function.<br>
+Array elements can be traversed by calling `.traversal([predicate])` on a lens that references an array.<br>
+You can pass `predicate` in traversal to filter elements of an array or chain `.traversal()).filter(predicate)` function.<br>
 Several `.filter()` functions can be chained one after another.
 
 ```javascript
 var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var filterArray = function (el) { return el.x > 1; }
-var traversal = Tscope.attr('array').traversal(filterArray).then(Tscope.attr('x'));
+var x_gt_1 = function (el) { return el.x > 1; }
+var traversal = Tscope.attr('array').traversal(x_gt_1).attr('x');
 // Same as:
-// Tscope.attr('array').traversal().filter(filterArray).then(Tscope.attr('x'));
+Tscope.attr('array').traversal().filter(x_gt_1).attr('x');
 
 traversal.get(data); //=> [2]
 traversal.mod(data, incr) //=> {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 3, y: 7}]}
@@ -98,9 +98,10 @@ traversal.set(data, 6) //=> {array: [{x: 0, y:9}, {x: 0, y: 8}, {x: 6, y: 7}]}
 
 // Nested traversals
 var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
-var friendsFilter = function(user) { return user.friends.length == 2; }
-var nameFilter = function(friend) { return friend.length == 3; }
-var traversal = Tscope.attr('users').traversal(friendsFilter).then(Tscope.attr('friends')).traversal(nameFilter);
+var friendly = function (user) { return user.friends.length == 2; }
+var threeLetter = function (s) { return s.length == 3; }
+var traversal = Tscope.attr('users').traversal(friendly)
+                      .attr('friends').traversal(threeLetter);
 
 traversal.get(data)
 //=> [['Bob']]
@@ -115,7 +116,7 @@ Tscope also provides cursors which are lenses enclosed over data or root accesso
 ```javascript
 var data = {some: deep: 1};
 var full = Tscope.dataCursor(data);
-var deepLens = Tscope.attr('some').then(Tscope.attr('deep');
+var deepLens = Tscope.attr('some').attr('deep');
 var cursor = full.then(deepLens);
 // Or
 var cursor = Tscope.dataCursor(data, deepLens);
