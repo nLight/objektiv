@@ -118,8 +118,6 @@ var data = {some: deep: 1};
 var full = Tscope.dataCursor(data);
 var deepLens = Tscope.attr('some').attr('deep');
 var cursor = full.then(deepLens);
-// Or
-var cursor = Tscope.dataCursor(data, deepLens);
 
 // Access
 cursor() //=> 1
@@ -134,14 +132,30 @@ full() //=> {some: deep: 42}
 data   //=> {some: deep: 1}
 ```
 
-Tscope also provides low-level `Tscope.makeCursor(getter, setter, [lens])`. For example, this way it can be used with react.js:
+Cursor can notify about each change via callback:
+
+```javascript
+var full = Tscope.dataCursor(data, function (newState, oldState) {
+    // ... deal with it
+})
+```
+
+This way it can be used with react.js. Inside a component:
 
 ```javascript
 var that = this;
-var full = Tscope.makeCursor(
-    function () {return that.state},
-    function (value) {return that.setState(value)}
-);
-var deepCursor = full.then(deepLens);
-// ... pass it to child component
+var full = Tscope.dataCursor(this.state, function (state) {
+  that.setState(state);
+});
+var childCursor = full.attr('child') // ... and pass it to a child component
+```
+
+Outside of a root component:
+
+```javascript
+var root = <Root ... />;
+Tscope.dataCursor({/** Initial data **/}, function (state) {
+  root.setProps(state);
+});
+React.renderComponent(root, ...);
 ```

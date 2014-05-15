@@ -167,7 +167,7 @@ describe('Tscope', function(){
     var lens = Tscope.attr('deep').attr('data');
 
     it('works', function() {
-      var deepCursor = Tscope.dataCursor(data, lens);
+      var deepCursor = Tscope.dataCursor(data).then(lens);
       assert.equal(1, deepCursor.get());
       deepCursor.set(2);
       assert.equal(2, deepCursor.get());
@@ -181,6 +181,20 @@ describe('Tscope', function(){
       assert.equal(deepCursor.get(), 1);
       assert.deepEqual(fullCursor.attr('deep').get(), {data: 1})
     });
+  });
+
+  describe('Data cursor', function() {
+    var data = {deep: {data: 1}};
+
+    it('receives new state and old state in a callback', function() {
+      var full = Tscope.dataCursor(data, function (newState, oldState) {
+        assert.deepEqual(oldState, {deep: {data: 1}});
+        assert.deepEqual(newState, {deep: {data: 2}});
+      });
+      var deepCursor = Tscope.dataCursor(data).attr('deep').attr('data');
+      deepCursor.mod(function (x) {return x + 1});
+    });
+
   });
 
   describe('Traversed cursors', function() {

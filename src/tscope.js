@@ -267,11 +267,16 @@ Tscope.makeCursor = function(getter, setter, lens) {
   return c;
 }
 
-Tscope.dataCursor = function(data, lens) {
+Tscope.dataCursor = function(data, callback) {
+  var setter = callback ? function (value) {
+                            callback(value, data);
+                            data = value
+                          }
+                        : function (value) {data = value};
+
   return Tscope.makeCursor(
     function(){return data},
-    function(value){data = value},
-    lens
+    setter
   )
 }
 
