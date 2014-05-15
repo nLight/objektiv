@@ -1,6 +1,6 @@
 {
   "name": "tscope.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Functional lenses in JavaScript",
   "main": "index.js",
   "scripts": {
