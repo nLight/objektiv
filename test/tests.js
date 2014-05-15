@@ -4,10 +4,6 @@ var Tscope = require("../src/tscope")
 describe('Tscope', function(){
   describe('#attr', function() {
     var data = { deep: {data: {structure: 1}} };
-
-    it('takes arbitrary number of arguments', function() {
-      assert.equal(1, Tscope.attr('deep', 'data', 'structure').get(data));
-    });
   });
 
   describe('Object property', function(){
@@ -51,7 +47,7 @@ describe('Tscope', function(){
     });
   });
 
-  describe('Parial lens', function() {
+  describe('Partial lens', function() {
     describe('for an object property', function() {
       var data = { someField: 1, someValue: 2 };
 
@@ -79,6 +75,35 @@ describe('Tscope', function(){
     });
   });
 
+  describe('Tryhard resolver', function() {
+    var data = { some: 1 };
+    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+
+    describe('when property not found', function() {
+      it('returns undefined on get', function() {
+        assert.equal(lens.get(data), undefined);
+      });
+      it('creates attr on set', function() {
+        assert.deepEqual(lens.set(data, 1), {some: 1, not_found: 1});
+      });
+    });
+  });
+
+  describe('Deep tryhard resolver', function() {
+    var data = { some: 1 };
+    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var deep = lens.then(lens);
+
+    describe('when property not found', function() {
+      it('returns undefined on get', function() {
+        assert.equal(deep.get(data), undefined);
+      });
+      it('does nothing on set', function() {
+        assert.deepEqual(deep.set(data, 1), {some: 1});
+      });
+    });
+  });
+
   describe('Array element', function(){
     var data = [1, 2, 3];
 
@@ -89,7 +114,7 @@ describe('Tscope', function(){
 
       it('sets a value of a property', function() {
         assert.deepEqual(Tscope.at(1)(data, 4), [1, 4, 3]);
-      });      
+      });
     });
 
     describe('when element with index not exists in array', function() {
@@ -103,7 +128,7 @@ describe('Tscope', function(){
         assert.throws(function(){
           Tscope.at(100).set(data, 1);
         }, TypeError, "Property 'not_found' doesn't exist!");
-      });      
+      });
     });
   });
 
@@ -134,7 +159,7 @@ describe('Tscope', function(){
 
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
-    var lens = Tscope.attr('deep', 'data')
+    var lens = Tscope.attr('deep').then(Tscope.attr('data'));
 
     it('works', function() {
       var deepCursor = Tscope.dataCursor(data, lens);
