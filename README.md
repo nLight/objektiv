@@ -5,10 +5,10 @@ Functional lenses in JavaScript
 
 ## Basics
 
-`Tscope.attr('field', ...)` Object attribute accessor. In case of many arguments lenses will be composed<br>
-`Tscope.at(index)` Array element accessor<br>
-`lens.then(otherLens, ...)` Lens composition can take many arguments<br>
-`lens.traversed([filter])` Returns traversed lens
+`Tscope.attr('field')` Object attribute accessor.<br>
+`Tscope.at(index)` Array element accessor.<br>
+`lens.then(otherLens, ...)` Lens composition can take many arguments.<br>
+`lens.traversal([filter])` Returns traversal, optionally filtered.
 
 
 # Regular lenses
@@ -115,9 +115,10 @@ Tscope also provides cursors which are lenses enclosed over data or root accesso
 ```javascript
 var data = {some: deep: 1};
 var full = Tscope.dataCursor(data);
-var cursor = full.then(Tscope.attr('some', 'deep'));
+var deepLens = Tscope.attr('some').then(Tscope.attr('deep');
+var cursor = full.then(deepLens);
 // Or
-var cursor = Tscope.dataCursor(data, Tscope.attr('some', 'deep'));
+var cursor = Tscope.dataCursor(data, deepLens);
 
 // Access
 cursor() //=> 1
@@ -140,6 +141,6 @@ var full = Tscope.makeCursor(
     function () {return that.state},
     function (value) {return that.setState(value)}
 );
-var deepCursor = full.then(Tscope.attr('some', 'deep'));
+var deepCursor = full.then(deepLens);
 // ... pass it to child component
 ```
