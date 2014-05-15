@@ -24,10 +24,7 @@ function composeLenses(lenses) {
   }, Tscope.full);
 }
 
-var Tscope = {
-  lenses:{}, 
-  partialLenses:{}
-};
+var Tscope = {resolve: {}, lenses: {}};
 
 Tscope.makeLens = function(getter, setter){
   var f = function(){
@@ -54,8 +51,62 @@ Tscope.makeLens = function(getter, setter){
     return Tscope.makeTraversal(f, null, pred);
   }
 
+  mixinLenses(f);
+
   return f;
 };
+
+
+/// Resolvers
+Tscope.resolve.strict = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) throw e;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      if (e) throw e;
+      return actions.set(a, val);
+    }
+  );
+}
+
+Tscope.resolve.pass = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) return undefined;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      if (e) return a;
+      return actions.set(a, val);
+    }
+  );
+}
+
+Tscope.resolve.tryhard = function (actions) {
+  return Tscope.makeLens(
+    function (a) {
+      var e = actions.check(a);
+      if (e) return undefined;
+      return actions.get(a);
+    },
+    function (a, val) {
+      var e = actions.check(a);
+      // NOTE: shouldn't examine a and val here,
+      //       ideally any action should be derived from error
+      if (!e || typeof a !== "undefined" && typeof val !== "undefined") {
+        return actions.set(a, val);
+      } else {
+        return a;
+      }
+    }
+  );
+}
 
 
 /// Normal Lenses
@@ -64,143 +115,71 @@ Tscope.full = Tscope.makeLens(
   function(a, val) {return val}
 );
 
-Tscope.at = function(i) {
-  var _l = Tscope.makeLens(
-    function(a) {
-      if(typeof a[i] === 'undefined') {
-        throw TypeError("Element with index " + i + " not found in the array!");
-      }
-
-      return a[i];
-    },
-    function(a, val) {
-      if(typeof a[i] === 'undefined') {
-        throw TypeError("Element with index " + i + " not found in the array!");
-      }
-
-      var _a = a.slice(0);
-      _a[i] = val;
-      return _a;
-    }
-  );
-
-  return _l;
+Tscope.lenses.at = function(i, resolver) {
+  return (resolver || Tscope.resolve.strict)({
+      check: function (a) {
+        if (typeof a === "undefined") {
+          return TypeError("Data is undefined!");
+        }
+        else if (typeof a[i] === "undefined") {
+          return TypeError("Element with index " + i + " not found in the array!");
+        }
+      },
+      get: function (a) {
+        return a[i];
+      },
+      set: function (a, val) {
+        var _a = a.slice();
+        _a[i] = val;
+        return _a;
+      },
+  });
 };
 
-Tscope.attr = function(name) {
-  var createLens = function (name) {
-    if (Tscope.lenses.hasOwnProperty(name)) {
-      return Tscope.lenses[name];
-    };
-
-    var _l = Tscope.makeLens(
-      function(a) {
-        if (!a.hasOwnProperty(name)) {
-          throw TypeError("Property '" + name + "' doesn't exist!");
-        }
-
-        return a[name];
-      },
-      function(a, val) {
-        if (!a.hasOwnProperty(name)) {
-          throw TypeError("Property '" + name + "' doesn't exist!");
-        }
-
-        var o = copyObject(a || {});
-        o[name] = val;
-        return o;
+Tscope.lenses.attr = function(name, resolver) {
+  return (resolver || Tscope.resolve.strict)({
+    check: function (a) {
+      if (typeof a === "undefined") {
+        return TypeError("Data is undefined!");
       }
-    );
-    
-    Tscope.lenses[name] = _l;
-
-    return _l;
-  }
-
-  var l = createLens(name);
-
-  if (arguments.length == 1) {
-    return l;
-  } 
-  else {
-    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
-      return lens.then(createLens(name));
-    }, l);
-  }
+      else if (!a.hasOwnProperty(name)) {
+        return TypeError("Property '" + name + "' doesn't exist!");
+      }
+    },
+    get: function (a) {
+      return a[name];
+    },
+    set: function (a, val) {
+      var o = copyObject(a);
+      o[name] = val;
+      return o;
+    },
+  });
 };
 
 
 /// Partial Lenses
-Tscope.partialAttr = function(name) {
-  var createLens = function (name) {
-    if (Tscope.partialLenses.hasOwnProperty(name)) {
-      return Tscope.partialLenses[name];
-    };
+Tscope.lenses.partialAttr = function (name) {
+  return Tscope.attr(name, Tscope.resolve.pass);
+}
 
-    var _l = Tscope.makeLens(
-      function(a) {
-        if (typeof a === "undefined") {
-          return undefined;
-        }
-
-        return a[name];
-      },
-      function(a, val) {
-        if (typeof a === "undefined") {
-          return undefined;
-        }
-        else if (!a.hasOwnProperty(name)) {
-          return copyObject(a);
-        }
-
-        var o = copyObject(a || {});
-        o[name] = val;
-        return o;
-      }
-    );
-
-    Tscope.partialLenses[name] = _l;
-
-    return _l;
-  }
-
-  var l = createLens(name);
-
-  if (arguments.length == 1) {
-    return l;
-  }
-  else {
-    return Array.prototype.slice.call(arguments, 1).reduce(function(lens, name){
-      return lens.then(createLens(name));
-    }, l);
-  }
+Tscope.lenses.partialAt = function(i) {
+  return Tscope.at(i, Tscope.resolve.pass);
 };
 
-Tscope.partialAt = function(i) {
-  var _l = Tscope.makeLens(
-    function(a) {
-      if(typeof a === 'undefined' || typeof a[i] === 'undefined') {
-        return undefined;
-      }
 
-      return a[i];
-    },
-    function(a, val) {
-      if(typeof a === 'undefined') {
-        return undefined;
-      }
-      else if (typeof a[i] === 'undefined') {
-        return a.slice(0);
-      }
+/// Mixin lenses
+Object.keys(Tscope.lenses).forEach(function (name) {
+  Tscope[name] = Tscope.lenses[name];
+});
 
-      var _a = a.slice(0);
-      _a[i] = val;
-      return _a;
+function mixinLenses(obj) {
+  Object.keys(Tscope.lenses).forEach(function (name) {
+    obj[name] = function () {
+      return obj.then(Tscope.lenses[name].apply(null, arguments));
     }
-  );
-  
-  return _l;
-};
+  });
+}
 
 
 /// Traversals
@@ -250,6 +229,8 @@ Tscope.makeTraversal = function (base, item, conds) {
     return Tscope.makeTraversal(base, item, conds.concat([[pred, item]]));
   }
 
+  mixinLenses(t);
+
   return t;
 }
 
@@ -281,6 +262,8 @@ Tscope.makeCursor = function(getter, setter, lens) {
   c.traversal = function (pred) {
     return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, null, pred));
   }
+
+  mixinLenses(c);
 
   return c;
 }
