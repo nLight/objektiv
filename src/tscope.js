@@ -23,7 +23,7 @@ function composeLenses(lenses) {
   }, Tscope.full);
 }
 
-var Tscope = {resolve: {}};
+var Tscope = {resolve: {}, lenses: {}};
 
 Tscope.makeLens = function(getter, setter){
   var f = function(){
@@ -49,6 +49,8 @@ Tscope.makeLens = function(getter, setter){
   f.traversal = function (pred) {
     return Tscope.makeTraversal(f, null, pred);
   }
+
+  mixinLenses(f);
 
   return f;
 };
@@ -112,7 +114,7 @@ Tscope.full = Tscope.makeLens(
   function(a, val) {return val}
 );
 
-Tscope.at = function(i, resolver) {
+Tscope.lenses.at = function(i, resolver) {
   return (resolver || Tscope.resolve.strict)({
       check: function (a) {
         if (typeof a === "undefined") {
@@ -133,8 +135,7 @@ Tscope.at = function(i, resolver) {
   });
 };
 
-
-Tscope.attr = function(name, resolver) {
+Tscope.lenses.attr = function(name, resolver) {
   return (resolver || Tscope.resolve.strict)({
     check: function (a) {
       if (typeof a === "undefined") {
@@ -157,13 +158,27 @@ Tscope.attr = function(name, resolver) {
 
 
 /// Partial Lenses
-Tscope.partialAttr = function (name) {
+Tscope.lenses.partialAttr = function (name) {
   return Tscope.attr(name, Tscope.resolve.pass);
 }
 
-Tscope.partialAt = function(i) {
+Tscope.lenses.partialAt = function(i) {
   return Tscope.at(i, Tscope.resolve.pass);
 };
+
+
+/// Mixin lenses
+Object.keys(Tscope.lenses).forEach(function (name) {
+  Tscope[name] = Tscope.lenses[name];
+});
+
+function mixinLenses(obj) {
+  Object.keys(Tscope.lenses).forEach(function (name) {
+    obj[name] = function () {
+      return obj.then(Tscope.lenses[name].apply(null, arguments));
+    }
+  });
+}
 
 
 /// Traversals
@@ -213,6 +228,8 @@ Tscope.makeTraversal = function (base, item, conds) {
     return Tscope.makeTraversal(base, item, conds.concat([[pred, item]]));
   }
 
+  mixinLenses(t);
+
   return t;
 }
 
@@ -244,6 +261,8 @@ Tscope.makeCursor = function(getter, setter, lens) {
   c.traversal = function (pred) {
     return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, null, pred));
   }
+
+  mixinLenses(c);
 
   return c;
 }

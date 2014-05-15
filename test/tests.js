@@ -143,6 +143,11 @@ describe('Tscope', function(){
       var composition = Tscope.attr('someField').then(Tscope.at(2), Tscope.attr('foo'))
       assert.deepEqual(10,  composition(data));
     });
+
+    it('has a shortcuts', function() {
+      assert.deepEqual(1,  Tscope.attr('someField').at(0)(data));
+      assert.deepEqual(10, Tscope.attr('someField').at(2).attr('foo')(data));
+    });
   });
 
   describe('Aliases', function() {
@@ -159,7 +164,7 @@ describe('Tscope', function(){
 
   describe('Cursor', function() {
     var data = {deep: {data: 1}};
-    var lens = Tscope.attr('deep').then(Tscope.attr('data'));
+    var lens = Tscope.attr('deep').attr('data');
 
     it('works', function() {
       var deepCursor = Tscope.dataCursor(data, lens);
@@ -173,7 +178,8 @@ describe('Tscope', function(){
     it('composes', function() {
       var fullCursor = Tscope.dataCursor(data);
       var deepCursor = fullCursor.then(lens);
-      assert.equal(1, deepCursor.get());
+      assert.equal(deepCursor.get(), 1);
+      assert.deepEqual(fullCursor.attr('deep').get(), {data: 1})
     });
   });
 
@@ -183,7 +189,7 @@ describe('Tscope', function(){
 
     beforeEach(function reset(){
       fullCursor = Tscope.dataCursor(data);
-      cursor = fullCursor.traversal().then(Tscope.attr('x'));
+      cursor = fullCursor.traversal().attr('x');
     });
 
     it('get traversed x', function() {

@@ -7,7 +7,7 @@ describe('Traversal', function() {
   var data = {array: [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}]};
 
   describe('without filter', function() {
-    var traverse = Tscope.attr('array').traversal().then(Tscope.attr('x'));
+    var traverse = Tscope.attr('array').traversal().attr('x');
 
     it('gets traversed x', function() {
       assert.deepEqual(traverse.get(data), [0, 1, 2]);
@@ -19,7 +19,7 @@ describe('Traversal', function() {
 
   describe('with filtered base', function() {
     var filtered = Tscope.attr('array').traversal(function(point){return point.x == 1;})
-                         .then(Tscope.attr('x'));
+                         .attr('x');
 
     it('gets traversed x', function() {
       assert.deepEqual(filtered.get(data), [1]);
@@ -30,7 +30,7 @@ describe('Traversal', function() {
   });
 
   describe('with filtered item', function() {
-    var filtered = Tscope.attr('array').traversal().then(Tscope.attr('x'))
+    var filtered = Tscope.attr('array').traversal().attr('x')
                          .filter(function(x){return x == 1;});
 
     it('gets traversed x', function() {
@@ -44,7 +44,7 @@ describe('Traversal', function() {
   describe('with filtered base and item', function() {
     var filtered = Tscope.attr('array')
                         .traversal(function(point){return point.x >= 1})
-                        .then(Tscope.attr('y'))
+                        .attr('y')
                         .filter(function(y){return y >= 8});
 
     it('gets filtered y', function() {
@@ -60,7 +60,7 @@ describe('Traversal', function() {
                         .traversal()
                         .filter(function(point){return point.x >= 1})
                         .filter(function(point){return point.y >= 8})
-                        .then(Tscope.attr('y'))
+                        .attr('y')
 
     it('gets filtered y', function() {
       assert.deepEqual(filtered.get(data), [8]);
@@ -83,7 +83,7 @@ describe('Nested traversals', function() {
   var toUpper = function (s) { return s.toUpperCase() }
 
   describe('with no filter', function() {
-    var nestedTraversal = traversal.traversal().then(Tscope.attr('name'));
+    var nestedTraversal = traversal.traversal().attr('name');
 
     it('get data', function() {
       assert.deepEqual(nestedTraversal.get(users), [["Bob","Alice"],["Bob","Josh","Bill"]]);
@@ -102,7 +102,7 @@ describe('Nested traversals', function() {
   describe('with filter', function() {
     var nestedTraversalFiltered = traversal.traversal(function(friend){
           return friend.email.indexOf('gmail.com') != -1
-        }).then(Tscope.attr('name'));
+        }).attr('name');
 
     it('get data', function() {
       assert.deepEqual(nestedTraversalFiltered.get(users), [["Bob"],["Josh","Bill"]]);
