@@ -53,7 +53,7 @@ describe('Tscope', function(){
 
       describe('when property not found', function() {
         it('returns undefined on get', function() {
-          assert.equal(Tscope.partialAttr('not_found').get(data), undefined);
+          assert.equal(Tscope.partialAttr('someValue').partialAttr('deep').get(data), undefined);
         });
         it('returns unchanged copy on an Object on set', function() {
           assert.deepEqual(Tscope.partialAttr('not_found').set(data, 1), { someField: 1, someValue: 2 });
