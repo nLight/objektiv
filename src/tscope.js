@@ -115,15 +115,8 @@ Tscope.resolve.fallback = function (defaultValue) {
         if (e) return defaultValue;
         return actions.get(a);
       },
-    function (a, val) {
-      var e = actions.check(a);
-      if (!e || typeof a !== "undefined" && typeof val !== "undefined") {
-        return actions.set(a, val);
-      } else {
-        return a;
-      }
-    }
-    );
+      actions.set
+    )
   }
 }
 
