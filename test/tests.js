@@ -104,6 +104,42 @@ describe('Tscope', function(){
     });
   });
 
+  describe('Default lens', function() {
+    var data = { some: 1 };
+    var lens = Tscope.defaultAttr('not_found', 0);
+
+    describe('when property not found', function() {
+      it('returns default on get', function() {
+        assert.equal(lens.get(data), 0);
+      });
+      it('creates attr on set', function() {
+        assert.deepEqual(lens.set(data, 1), {some: 1, not_found: 1});
+      });
+      it('uses default on mod', function() {
+        var incr = function (x) { return x + 1}
+        assert.deepEqual(lens.mod(data, incr), {some: 1, not_found: 1});
+      });
+    });
+  });
+
+  describe('Deep default lens', function() {
+    var data = { some: 1 };
+    var lensY = Tscope.defaultAttr('x', {z: 10}).defaultAttr('y', 5);
+    var lensZ = Tscope.defaultAttr('x', {z: 10}).defaultAttr('z', 5);
+
+    describe('when property not found', function() {
+      it('returns first default on get', function() {
+        assert.equal(lensY.get(data), 5);
+        assert.equal(lensZ.get(data), 10);
+      });
+      it('uses first default on mod', function() {
+        var incr = function (x) { return x + 1}
+        assert.deepEqual(lensY.mod(data, incr), {some: 1, x: {y: 6, z: 10}});
+        assert.deepEqual(lensZ.mod(data, incr), {some: 1, x: {z: 11}});
+      });
+    });
+  });
+
   describe('Array element', function(){
     var data = [1, 2, 3];
 

@@ -107,6 +107,26 @@ Tscope.resolve.tryhard = function (actions) {
   );
 }
 
+Tscope.resolve.fallback = function (defaultValue) {
+  return function (actions) {
+    return Tscope.makeLens(
+      function (a) {
+        var e = actions.check(a);
+        if (e) return defaultValue;
+        return actions.get(a);
+      },
+    function (a, val) {
+      var e = actions.check(a);
+      if (!e || typeof a !== "undefined" && typeof val !== "undefined") {
+        return actions.set(a, val);
+      } else {
+        return a;
+      }
+    }
+    );
+  }
+}
+
 
 /// Normal Lenses
 Tscope.full = Tscope.makeLens(
@@ -164,6 +184,15 @@ Tscope.lenses.partialAttr = function (name) {
 
 Tscope.lenses.partialAt = function(i) {
   return Tscope.at(i, Tscope.resolve.pass);
+};
+
+/// Default Lenses
+Tscope.lenses.defaultAttr = function (name, defaultValue) {
+  return Tscope.attr(name, Tscope.resolve.fallback(defaultValue));
+}
+
+Tscope.lenses.defaultAt = function(i, defaultValue) {
+  return Tscope.at(i, Tscope.resolve.fallback(defaultValue));
 };
 
 
