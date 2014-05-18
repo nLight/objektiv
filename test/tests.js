@@ -77,7 +77,7 @@ describe('Tscope', function(){
 
   describe('Tryhard resolver', function() {
     var data = { some: 1 };
-    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var lens = Tscope.makeAttrLens('not_found', Tscope.resolve.tryhard);
 
     describe('when property not found', function() {
       it('returns undefined on get', function() {
@@ -91,7 +91,7 @@ describe('Tscope', function(){
 
   describe('Deep tryhard resolver', function() {
     var data = { some: 1 };
-    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var lens = Tscope.makeAttrLens('not_found', Tscope.resolve.tryhard);
     var deep = lens.then(lens);
 
     describe('when property not found', function() {
@@ -100,6 +100,42 @@ describe('Tscope', function(){
       });
       it('does nothing on set', function() {
         assert.deepEqual(deep.set(data, 1), {some: 1});
+      });
+    });
+  });
+
+  describe('Default lens', function() {
+    var data = { some: 1 };
+    var lens = Tscope.attr('not_found', 0);
+
+    describe('when property not found', function() {
+      it('returns default on get', function() {
+        assert.equal(lens.get(data), 0);
+      });
+      it('creates attr on set', function() {
+        assert.deepEqual(lens.set(data, 1), {some: 1, not_found: 1});
+      });
+      it('uses default on mod', function() {
+        var incr = function (x) { return x + 1}
+        assert.deepEqual(lens.mod(data, incr), {some: 1, not_found: 1});
+      });
+    });
+  });
+
+  describe('Deep default lens', function() {
+    var data = { some: 1 };
+    var lensY = Tscope.attr('x', {z: 10}).attr('y', 5);
+    var lensZ = Tscope.attr('x', {z: 10}).attr('z', 5);
+
+    describe('when property not found', function() {
+      it('returns first default on get', function() {
+        assert.equal(lensY.get(data), 5);
+        assert.equal(lensZ.get(data), 10);
+      });
+      it('uses first default on mod', function() {
+        var incr = function (x) { return x + 1}
+        assert.deepEqual(lensY.mod(data, incr), {some: 1, x: {y: 6, z: 10}});
+        assert.deepEqual(lensZ.mod(data, incr), {some: 1, x: {z: 11}});
       });
     });
   });
