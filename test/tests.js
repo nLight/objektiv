@@ -77,7 +77,7 @@ describe('Tscope', function(){
 
   describe('Tryhard resolver', function() {
     var data = { some: 1 };
-    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var lens = Tscope.makeAttrLens('not_found', Tscope.resolve.tryhard);
 
     describe('when property not found', function() {
       it('returns undefined on get', function() {
@@ -91,7 +91,7 @@ describe('Tscope', function(){
 
   describe('Deep tryhard resolver', function() {
     var data = { some: 1 };
-    var lens = Tscope.attr('not_found', Tscope.resolve.tryhard);
+    var lens = Tscope.makeAttrLens('not_found', Tscope.resolve.tryhard);
     var deep = lens.then(lens);
 
     describe('when property not found', function() {
@@ -106,7 +106,7 @@ describe('Tscope', function(){
 
   describe('Default lens', function() {
     var data = { some: 1 };
-    var lens = Tscope.defaultAttr('not_found', 0);
+    var lens = Tscope.attr('not_found', 0);
 
     describe('when property not found', function() {
       it('returns default on get', function() {
@@ -124,8 +124,8 @@ describe('Tscope', function(){
 
   describe('Deep default lens', function() {
     var data = { some: 1 };
-    var lensY = Tscope.defaultAttr('x', {z: 10}).defaultAttr('y', 5);
-    var lensZ = Tscope.defaultAttr('x', {z: 10}).defaultAttr('z', 5);
+    var lensY = Tscope.attr('x', {z: 10}).attr('y', 5);
+    var lensZ = Tscope.attr('x', {z: 10}).attr('z', 5);
 
     describe('when property not found', function() {
       it('returns first default on get', function() {
