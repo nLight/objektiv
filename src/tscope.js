@@ -291,6 +291,12 @@ Tscope.makeCursor = function(getter, setter, lens) {
 
   mixinLenses(c);
 
+  c.map = function(callback) {
+    return c.get().map(function (_, i) {
+      return callback(c.at(i), i, c);
+    });
+  }
+
   return c;
 }
 

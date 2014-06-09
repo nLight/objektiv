@@ -220,7 +220,14 @@ describe('Tscope', function(){
   });
 
   describe('Data cursor', function() {
-    var data = {deep: {data: 1}};
+    var data = {
+      deep: {data: 1}, 
+      elements: [
+        {name: 'Carbon', atomicNumber: 6},
+        {name: 'Nitrogen', atomicNumber: 7},
+        {name: 'Oxygen', atomicNumber: 8},
+      ]
+    };
 
     it('receives new state and old state in a callback', function() {
       var full = Tscope.dataCursor(data, function (newState, oldState) {
@@ -229,6 +236,27 @@ describe('Tscope', function(){
       });
       var deepCursor = Tscope.dataCursor(data).attr('deep').attr('data');
       deepCursor.mod(function (x) {return x + 1});
+    });
+
+    it('maps through cursors', function() {
+      var elementsCursor = Tscope.dataCursor(data).attr('elements');
+      var mappedCursors = elementsCursor.map(function(elCursor){
+        return elCursor;
+      });
+
+      assert.equal(mappedCursors[0].attr('name').get(), 'Carbon');
+    });
+
+    it('passes subcursor, index and a full cursor into map function', function() {
+      var elementsCursor = Tscope.dataCursor(data).attr('elements');
+      var j = 0;
+      elementsCursor.map(function(elCursor, i, full){
+        assert.deepEqual(elCursor.get(), data.elements[i]);
+        assert.deepEqual(elementsCursor.get(), full.get());
+        assert.equal(i, j);
+
+        j++;
+      });
     });
 
   });
