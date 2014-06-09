@@ -73,7 +73,7 @@ Tscope.resolve.strict = function (actions) {
   );
 }
 
-Tscope.resolve.pass = function (actions) {
+Tscope.resolve.partial = function (actions) {
   return Tscope.makeLens(
     function (a) {
       var e = actions.check(a);
@@ -108,36 +108,44 @@ Tscope.resolve.tryhard = function (actions) {
   );
 }
 
+Tscope.resolve.fallback = function (defaultValue) {
+  return function (actions) {
+    return Tscope.makeLens(
+      function (a) {
+        var e = actions.check(a);
+        if (e) return defaultValue;
+        return actions.get(a);
+      },
+      actions.set
+    )
+  }
+}
 
-/// Normal Lenses
-Tscope.full = Tscope.makeLens(
-  function(a) {return a},
-  function(a, val) {return val}
-);
 
-Tscope.lenses.at = function(i, resolver) {
-  return (resolver || Tscope.resolve.strict)({
-      check: function (a) {
-        if (typeof a === "undefined") {
-          return TypeError("Data is undefined!");
-        }
-        else if (typeof a[i] === "undefined") {
-          return TypeError("Element with index " + i + " not found in the array!");
-        }
-      },
-      get: function (a) {
-        return a[i];
-      },
-      set: function (a, val) {
-        var _a = a.slice();
-        _a[i] = val;
-        return _a;
-      },
+// Low-level lens constructors
+Tscope.makeAtLens = function (i, resolver) {
+  return resolver({
+    check: function (a) {
+      if (typeof a === "undefined") {
+        return TypeError("Data is undefined!");
+      }
+      else if (typeof a[i] === "undefined") {
+        return TypeError("Element with index " + i + " not found in the array!");
+      }
+    },
+    get: function (a) {
+      return a[i];
+    },
+    set: function (a, val) {
+      var _a = a.slice();
+      _a[i] = val;
+      return _a;
+    }
   });
-};
+}
 
-Tscope.lenses.attr = function(name, resolver) {
-  return (resolver || Tscope.resolve.strict)({
+Tscope.makeAttrLens = function(name, resolver) {
+  return resolver({
     check: function (a) {
       if (typeof a === "undefined") {
         return TypeError("Data is undefined!");
@@ -153,19 +161,38 @@ Tscope.lenses.attr = function(name, resolver) {
       var o = copyObject(a);
       o[name] = val;
       return o;
-    },
-  });
+    }
+  })
+}
+
+
+/// Normal Lenses
+Tscope.full = Tscope.makeLens(
+  function(a) {return a},
+  function(a, val) {return val}
+);
+
+Tscope.lenses.at = function(i, defaultValue) {
+  var resolver = (arguments.length === 1) ? Tscope.resolve.strict 
+                                          : Tscope.resolve.fallback(defaultValue);
+  return Tscope.makeAtLens(i, resolver);
 };
+
+Tscope.lenses.attr = function (name, defaultValue) {
+  var resolver = (arguments.length === 1) ? Tscope.resolve.strict 
+                                          : Tscope.resolve.fallback(defaultValue);
+  return Tscope.makeAttrLens(name, resolver);
+}
 
 
 /// Partial Lenses
-Tscope.lenses.partialAttr = function (name) {
-  return Tscope.attr(name, Tscope.resolve.pass);
+Tscope.lenses.partialAt = function (i) {
+  return Tscope.makeAtLens(i, Tscope.resolve.partial);
 }
 
-Tscope.lenses.partialAt = function(i) {
-  return Tscope.at(i, Tscope.resolve.pass);
-};
+Tscope.lenses.partialAttr = function (name) {
+  return Tscope.makeAttrLens(name, Tscope.resolve.partial);
+}
 
 
 /// Mixin lenses
@@ -264,6 +291,12 @@ Tscope.makeCursor = function(getter, setter, lens) {
   }
 
   mixinLenses(c);
+
+  c.map = function(callback) {
+    return c.get().map(function (_, i) {
+      return callback(c.at(i), i, c);
+    });
+  }
 
   return c;
 }
