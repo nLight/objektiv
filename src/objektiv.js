@@ -1,6 +1,6 @@
 function composeLenses(lenses) {
   return lenses.reduce(function(lens1, lens2){
-      return Tscope.makeLens(
+      return Objektiv.makeLens(
         function(a) {
           var _a = lens1(a);
           return lens2(_a);
@@ -11,12 +11,12 @@ function composeLenses(lenses) {
           return lens1(a, _val);
         }
       );
-  }, Tscope.full);
+  }, Objektiv.full);
 }
 
-var Tscope = {resolve: {}, lenses: {}};
+var Objektiv = {resolve: {}, lenses: {}};
 
-Tscope.makeLens = function(getter, setter){
+Objektiv.makeLens = function(getter, setter){
   var f = function(){
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
@@ -38,7 +38,7 @@ Tscope.makeLens = function(getter, setter){
   }.bind(null, f);
 
   f.traversal = function (pred) {
-    return Tscope.makeTraversal(f, null, pred);
+    return Objektiv.makeTraversal(f, null, pred);
   }
 
   mixinLenses(f);
@@ -48,8 +48,8 @@ Tscope.makeLens = function(getter, setter){
 
 
 /// Resolvers
-Tscope.resolve.strict = function (actions) {
-  return Tscope.makeLens(
+Objektiv.resolve.strict = function (actions) {
+  return Objektiv.makeLens(
     function (a) {
       var e = actions.check(a);
       if (e) throw e;
@@ -63,8 +63,8 @@ Tscope.resolve.strict = function (actions) {
   );
 }
 
-Tscope.resolve.partial = function (actions) {
-  return Tscope.makeLens(
+Objektiv.resolve.partial = function (actions) {
+  return Objektiv.makeLens(
     function (a) {
       var e = actions.check(a);
       if (e) return undefined;
@@ -78,8 +78,8 @@ Tscope.resolve.partial = function (actions) {
   );
 }
 
-Tscope.resolve.tryhard = function (actions) {
-  return Tscope.makeLens(
+Objektiv.resolve.tryhard = function (actions) {
+  return Objektiv.makeLens(
     function (a) {
       var e = actions.check(a);
       if (e) return undefined;
@@ -98,9 +98,9 @@ Tscope.resolve.tryhard = function (actions) {
   );
 }
 
-Tscope.resolve.fallback = function (defaultValue) {
+Objektiv.resolve.fallback = function (defaultValue) {
   return function (actions) {
-    return Tscope.makeLens(
+    return Objektiv.makeLens(
       function (a) {
         var e = actions.check(a);
         if (e) return defaultValue;
@@ -113,7 +113,7 @@ Tscope.resolve.fallback = function (defaultValue) {
 
 
 // Low-level lens constructors
-Tscope.makeAtLens = function (i, resolver) {
+Objektiv.makeAtLens = function (i, resolver) {
   return resolver({
     check: function (a) {
       if (typeof a === "undefined") {
@@ -134,7 +134,7 @@ Tscope.makeAtLens = function (i, resolver) {
   });
 }
 
-Tscope.makeAttrLens = function(name, resolver) {
+Objektiv.makeAttrLens = function(name, resolver) {
   return resolver({
     check: function (a) {
       if (typeof a === "undefined") {
@@ -157,54 +157,54 @@ Tscope.makeAttrLens = function(name, resolver) {
 
 
 /// Normal Lenses
-Tscope.full = Tscope.makeLens(
+Objektiv.full = Objektiv.makeLens(
   function(a) {return a},
   function(a, val) {return val}
 );
 
-Tscope.lenses.at = function(i, defaultValue) {
-  var resolver = (arguments.length === 1) ? Tscope.resolve.strict
-                                          : Tscope.resolve.fallback(defaultValue);
-  return Tscope.makeAtLens(i, resolver);
+Objektiv.lenses.at = function(i, defaultValue) {
+  var resolver = (arguments.length === 1) ? Objektiv.resolve.strict
+                                          : Objektiv.resolve.fallback(defaultValue);
+  return Objektiv.makeAtLens(i, resolver);
 };
 
-Tscope.lenses.attr = function (name, defaultValue) {
-  var resolver = (arguments.length === 1) ? Tscope.resolve.strict
-                                          : Tscope.resolve.fallback(defaultValue);
-  return Tscope.makeAttrLens(name, resolver);
+Objektiv.lenses.attr = function (name, defaultValue) {
+  var resolver = (arguments.length === 1) ? Objektiv.resolve.strict
+                                          : Objektiv.resolve.fallback(defaultValue);
+  return Objektiv.makeAttrLens(name, resolver);
 }
 
 
 /// Partial Lenses
-Tscope.lenses.partialAt = function (i) {
-  return Tscope.makeAtLens(i, Tscope.resolve.partial);
+Objektiv.lenses.partialAt = function (i) {
+  return Objektiv.makeAtLens(i, Objektiv.resolve.partial);
 }
 
-Tscope.lenses.partialAttr = function (name) {
-  return Tscope.makeAttrLens(name, Tscope.resolve.partial);
+Objektiv.lenses.partialAttr = function (name) {
+  return Objektiv.makeAttrLens(name, Objektiv.resolve.partial);
 }
 
 
 /// Mixin lenses
-Object.keys(Tscope.lenses).forEach(function (name) {
-  Tscope[name] = Tscope.lenses[name];
+Object.keys(Objektiv.lenses).forEach(function (name) {
+  Objektiv[name] = Objektiv.lenses[name];
 });
 
 function mixinLenses(obj) {
-  Object.keys(Tscope.lenses).forEach(function (name) {
+  Object.keys(Objektiv.lenses).forEach(function (name) {
     obj[name] = function () {
-      return obj.then(Tscope.lenses[name].apply(null, arguments));
+      return obj.then(Objektiv.lenses[name].apply(null, arguments));
     }
   });
 }
 
 
 /// Traversals
-Tscope.makeTraversal = function (base, item, conds) {
-  item = item || Tscope.full;
+Objektiv.makeTraversal = function (base, item, conds) {
+  item = item || Objektiv.full;
   conds = conds || [];
   if (typeof conds === 'function') {
-    conds = [[conds, Tscope.full]];
+    conds = [[conds, Objektiv.full]];
   }
 
   function condsMatch(el, i) {
@@ -236,14 +236,14 @@ Tscope.makeTraversal = function (base, item, conds) {
   }
 
   t.then = function () {
-    return Tscope.makeTraversal(base, item.then.apply(null, arguments), conds);
+    return Objektiv.makeTraversal(base, item.then.apply(null, arguments), conds);
   }
   t.traversal = function (pred) {
-    var t = Tscope.makeTraversal(item, null, pred);
-    return Tscope.makeTraversal(base, t, conds);
+    var t = Objektiv.makeTraversal(item, null, pred);
+    return Objektiv.makeTraversal(base, t, conds);
   }
   t.filter = function (pred) {
-    return Tscope.makeTraversal(base, item, conds.concat([[pred, item]]));
+    return Objektiv.makeTraversal(base, item, conds.concat([[pred, item]]));
   }
 
   mixinLenses(t);
@@ -253,8 +253,8 @@ Tscope.makeTraversal = function (base, item, conds) {
 
 
 /// Cursors
-Tscope.makeCursor = function(getter, setter, lens) {
-  lens = lens || Tscope.full;
+Objektiv.makeCursor = function(getter, setter, lens) {
+  lens = lens || Objektiv.full;
 
   var c = function(value) {
     if (arguments.length === 0) {
@@ -274,10 +274,10 @@ Tscope.makeCursor = function(getter, setter, lens) {
   }
 
   c.then = function() {
-    return Tscope.makeCursor(getter, setter, lens.then.apply(null, arguments));
+    return Objektiv.makeCursor(getter, setter, lens.then.apply(null, arguments));
   }
   c.traversal = function (pred) {
-    return Tscope.makeCursor(getter, setter, Tscope.makeTraversal(lens, null, pred));
+    return Objektiv.makeCursor(getter, setter, Objektiv.makeTraversal(lens, null, pred));
   }
 
   mixinLenses(c);
@@ -291,7 +291,7 @@ Tscope.makeCursor = function(getter, setter, lens) {
   return c;
 }
 
-Tscope.dataCursor = function(data, callback) {
+Objektiv.dataCursor = function(data, callback) {
   var updateCallbacks = [];
 
   var onUpdate = function(callback) {
@@ -310,7 +310,7 @@ Tscope.dataCursor = function(data, callback) {
     data = value;
   }
 
-  var c = Tscope.makeCursor(
+  var c = Objektiv.makeCursor(
     function(){return data},
     setter
   );
@@ -321,7 +321,7 @@ Tscope.dataCursor = function(data, callback) {
 }
 
 
-module.exports = Tscope;
+module.exports = Objektiv;
 if(typeof window === "object") {
-  window.Tscope = Tscope;
+  window.Objektiv = Objektiv;
 }

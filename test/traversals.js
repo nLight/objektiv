@@ -1,5 +1,5 @@
 var assert = require("assert")
-var Tscope = require("../src/tscope")
+var Objektiv = require("../src/objektiv")
 
 var incr = function(x){return x + 1};
 
@@ -7,7 +7,7 @@ describe('Traversal', function() {
   var data = {array: [{x: 0, y: 9}, {x: 1, y: 8}, {x: 2, y: 7}]};
 
   describe('without filter', function() {
-    var traverse = Tscope.attr('array').traversal().attr('x');
+    var traverse = Objektiv.attr('array').traversal().attr('x');
 
     it('gets traversed x', function() {
       assert.deepEqual(traverse.get(data), [0, 1, 2]);
@@ -18,7 +18,7 @@ describe('Traversal', function() {
   });
 
   describe('with filtered base', function() {
-    var filtered = Tscope.attr('array').traversal(function(point){return point.x == 1;})
+    var filtered = Objektiv.attr('array').traversal(function(point){return point.x == 1;})
                          .attr('x');
 
     it('gets traversed x', function() {
@@ -30,7 +30,7 @@ describe('Traversal', function() {
   });
 
   describe('with filtered item', function() {
-    var filtered = Tscope.attr('array').traversal().attr('x')
+    var filtered = Objektiv.attr('array').traversal().attr('x')
                          .filter(function(x){return x == 1;});
 
     it('gets traversed x', function() {
@@ -42,7 +42,7 @@ describe('Traversal', function() {
   });
 
   describe('with filtered base and item', function() {
-    var filtered = Tscope.attr('array')
+    var filtered = Objektiv.attr('array')
                         .traversal(function(point){return point.x >= 1})
                         .attr('y')
                         .filter(function(y){return y >= 8});
@@ -56,7 +56,7 @@ describe('Traversal', function() {
   });
 
   describe('with 2 same level filters', function() {
-    var filtered = Tscope.attr('array')
+    var filtered = Objektiv.attr('array')
                         .traversal()
                         .filter(function(point){return point.x >= 1})
                         .filter(function(point){return point.y >= 8})
@@ -79,7 +79,7 @@ describe('Nested traversals', function() {
     ]
   };
 
-  var traversal = Tscope.makeTraversal(Tscope.attr('users'), Tscope.attr('friends'));
+  var traversal = Objektiv.makeTraversal(Objektiv.attr('users'), Objektiv.attr('friends'));
   var toUpper = function (s) { return s.toUpperCase() }
 
   describe('with no filter', function() {

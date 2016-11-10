@@ -1,1 +1,1 @@
-module.exports = require('./src/tscope');
+module.exports = require('./src/objektiv');
