@@ -1,12 +1,3 @@
-// Creates a shallow copy of source object
-function copyObject(source) {
-  var copy = {};
-  for (var prop in source) {
-    copy[prop] = source[prop];
-  }
-  return copy;
-}
-
 function composeLenses(lenses) {
   return lenses.reduce(function(lens1, lens2){
       return Tscope.makeLens(
@@ -136,7 +127,7 @@ Tscope.makeAtLens = function (i, resolver) {
       return a[i];
     },
     set: function (a, val) {
-      var _a = a.slice();
+      var _a = a.slice(0);
       _a[i] = val;
       return _a;
     }
@@ -157,7 +148,7 @@ Tscope.makeAttrLens = function(name, resolver) {
       return a[name];
     },
     set: function (a, val) {
-      var o = copyObject(a);
+      var o = Object.assign({}, a);
       o[name] = val;
       return o;
     }
@@ -172,13 +163,13 @@ Tscope.full = Tscope.makeLens(
 );
 
 Tscope.lenses.at = function(i, defaultValue) {
-  var resolver = (arguments.length === 1) ? Tscope.resolve.strict 
+  var resolver = (arguments.length === 1) ? Tscope.resolve.strict
                                           : Tscope.resolve.fallback(defaultValue);
   return Tscope.makeAtLens(i, resolver);
 };
 
 Tscope.lenses.attr = function (name, defaultValue) {
-  var resolver = (arguments.length === 1) ? Tscope.resolve.strict 
+  var resolver = (arguments.length === 1) ? Tscope.resolve.strict
                                           : Tscope.resolve.fallback(defaultValue);
   return Tscope.makeAttrLens(name, resolver);
 }
@@ -325,7 +316,7 @@ Tscope.dataCursor = function(data, callback) {
   );
 
   c.onUpdate = onUpdate;
-  
+
   return c;
 }
 
