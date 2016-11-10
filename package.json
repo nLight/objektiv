@@ -1,5 +1,5 @@
 {
-  "name": "tscope.js",
+  "name": "objektiv",
   "version": "0.1.0",
   "description": "Functional lenses in JavaScript",
   "main": "index.js",
