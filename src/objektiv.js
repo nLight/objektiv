@@ -323,6 +323,3 @@ Objektiv.dataCursor = function(data, callback) {
 
 
 module.exports = Objektiv;
-if(typeof window === "object") {
-  window.Objektiv = Objektiv;
-}
