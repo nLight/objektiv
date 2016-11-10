@@ -48,6 +48,8 @@ Objektiv.makeLens = function(getter, setter){
 
 
 /// Resolvers
+// Strict resolver.
+// throws if path can not be resolved in the object
 Objektiv.resolve.strict = function (actions) {
   return Objektiv.makeLens(
     function (a) {
@@ -63,6 +65,9 @@ Objektiv.resolve.strict = function (actions) {
   );
 }
 
+// Partial resolver
+// get - returns undefined if path can't be resolved
+// set - returns data unchanged if path can't be resolved
 Objektiv.resolve.partial = function (actions) {
   return Objektiv.makeLens(
     function (a) {
@@ -78,6 +83,9 @@ Objektiv.resolve.partial = function (actions) {
   );
 }
 
+// Try hard resolver
+// get - returns undefined if path can't be resolved
+// set - sets the value at the path
 Objektiv.resolve.tryhard = function (actions) {
   return Objektiv.makeLens(
     function (a) {
@@ -85,19 +93,12 @@ Objektiv.resolve.tryhard = function (actions) {
       if (e) return undefined;
       return actions.get(a);
     },
-    function (a, val) {
-      var e = actions.check(a);
-      // NOTE: shouldn't examine a and val here,
-      //       ideally any action should be derived from error
-      if (!e || typeof a !== "undefined" && typeof val !== "undefined") {
-        return actions.set(a, val);
-      } else {
-        return a;
-      }
-    }
+    actions.set
   );
 }
 
+// Fallback resolver
+// get - returns default vaule if path can't be resolved
 Objektiv.resolve.fallback = function (defaultValue) {
   return function (actions) {
     return Objektiv.makeLens(
@@ -116,10 +117,10 @@ Objektiv.resolve.fallback = function (defaultValue) {
 Objektiv.makeAtLens = function (i, resolver) {
   return resolver({
     check: function (a) {
-      if (typeof a === "undefined") {
+      if (a === undefined) {
         return TypeError("Data is undefined!");
       }
-      else if (typeof a[i] === "undefined") {
+      else if (a[i] === undefined) {
         return TypeError("Element with index " + i + " not found in the array!");
       }
     },
@@ -127,7 +128,7 @@ Objektiv.makeAtLens = function (i, resolver) {
       return a[i];
     },
     set: function (a, val) {
-      var _a = a.slice(0);
+      var _a = (a || []).slice(0);
       _a[i] = val;
       return _a;
     }
@@ -137,7 +138,7 @@ Objektiv.makeAtLens = function (i, resolver) {
 Objektiv.makeAttrLens = function(name, resolver) {
   return resolver({
     check: function (a) {
-      if (typeof a === "undefined") {
+      if (a === undefined) {
         return TypeError("Data is undefined!");
       }
       else if (!a.hasOwnProperty(name)) {

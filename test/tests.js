@@ -98,8 +98,8 @@ describe('Objektiv', function(){
       it('returns undefined on get', function() {
         assert.equal(deep.get(data), undefined);
       });
-      it('does nothing on set', function() {
-        assert.deepEqual(deep.set(data, 1), {some: 1});
+      it('creates a deep structure on set', function() {
+        assert.deepEqual(deep.set(data, 1), {some: 1, not_found: {not_found: 1}});
       });
     });
   });
