@@ -1,7 +1,7 @@
 {
   "name": "objektiv",
-  "version": "0.2.0",
-  "description": "Functional lenses in JavaScript",
+  "version": "0.3.0",
+  "description": "Functional lenses for JavaScript",
   "main": "index.js",
   "scripts": {
     "test": "node_modules/mocha/bin/mocha"
