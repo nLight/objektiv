@@ -17,7 +17,7 @@
     "Traversals"
   ],
   "devDependencies": {
-    "mocha": "3.5.3"
+    "mocha": "4.0.1"
   },
   "author": {
     "name": "Dmitriy Rozhkov",
