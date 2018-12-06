@@ -2,22 +2,22 @@ function composeLenses(lenses) {
   return lenses.reduce(function(lens1, lens2) {
     return Objektiv.makeLens(
       function(a) {
-        var _a = lens1(a);
+        const _a = lens1(a);
         return lens2(_a);
       },
       function(a, val) {
-        var _a = lens1(a);
-        var _val = lens2(_a, val);
+        const _a = lens1(a);
+        const _val = lens2(_a, val);
         return lens1(a, _val);
       }
     );
   }, Objektiv.full);
 }
 
-var Objektiv = { resolve: {}, lenses: {} };
+const Objektiv = { resolve: {}, lenses: {} };
 
 Objektiv.makeLens = function(getter, setter) {
-  var f = function() {
+  const f = function() {
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
     } else if (arguments.length == 2) {
@@ -51,12 +51,12 @@ Objektiv.makeLens = function(getter, setter) {
 Objektiv.resolve.strict = function(actions) {
   return Objektiv.makeLens(
     function(a) {
-      var e = actions.check(a);
+      const e = actions.check(a);
       if (e) throw e;
       return actions.get(a);
     },
     function(a, val) {
-      var e = actions.check(a);
+      const e = actions.check(a);
       if (e) throw e;
       return actions.set(a, val);
     }
@@ -69,12 +69,12 @@ Objektiv.resolve.strict = function(actions) {
 Objektiv.resolve.partial = function(actions) {
   return Objektiv.makeLens(
     function(a) {
-      var e = actions.check(a);
+      const e = actions.check(a);
       if (e) return undefined;
       return actions.get(a);
     },
     function(a, val) {
-      var e = actions.check(a);
+      const e = actions.check(a);
       if (e) return a;
       return actions.set(a, val);
     }
@@ -86,7 +86,7 @@ Objektiv.resolve.partial = function(actions) {
 // set - sets the value at the path
 Objektiv.resolve.tryhard = function(actions) {
   return Objektiv.makeLens(function(a) {
-    var e = actions.check(a);
+    const e = actions.check(a);
     if (e) return undefined;
     return actions.get(a);
   }, actions.set);
@@ -97,7 +97,7 @@ Objektiv.resolve.tryhard = function(actions) {
 Objektiv.resolve.fallback = function(defaultValue) {
   return function(actions) {
     return Objektiv.makeLens(function(a) {
-      var e = actions.check(a);
+      const e = actions.check(a);
       if (e) return defaultValue;
       return actions.get(a);
     }, actions.set);
@@ -120,7 +120,7 @@ Objektiv.makeAtLens = function(i, resolver) {
       return a[i];
     },
     set: function(a, val) {
-      var _a = (a || []).slice(0);
+      const _a = (a || []).slice(0);
       _a[i] = val;
       return _a;
     }
@@ -140,7 +140,7 @@ Objektiv.makeAttrLens = function(name, resolver) {
       return a[name];
     },
     set: function(a, val) {
-      var o = Object.assign({}, a);
+      const o = Object.assign({}, a);
       o[name] = val;
       return o;
     }
@@ -158,7 +158,7 @@ Objektiv.full = Objektiv.makeLens(
 );
 
 Objektiv.lenses.at = function(i, defaultValue) {
-  var resolver =
+  const resolver =
     arguments.length === 1
       ? Objektiv.resolve.strict
       : Objektiv.resolve.fallback(defaultValue);
@@ -166,7 +166,7 @@ Objektiv.lenses.at = function(i, defaultValue) {
 };
 
 Objektiv.lenses.attr = function(name, defaultValue) {
-  var resolver =
+  const resolver =
     arguments.length === 1
       ? Objektiv.resolve.strict
       : Objektiv.resolve.fallback(defaultValue);
@@ -205,20 +205,20 @@ Objektiv.makeTraversal = function(base, item, conds) {
 
   function condsMatch(el, i) {
     return conds.every(function(cond) {
-      var pred = cond[0],
+      const pred = cond[0],
         lens = cond[1];
       return pred(lens(el), i);
     });
   }
 
-  var t = {};
+  const t = {};
   t.get = function(a) {
-    var list = base.get(a);
+    const list = base.get(a);
     return list.filter(condsMatch).map(item.get);
   };
   t.mod = function(a, f) {
-    var source = base.get(a);
-    var list = source.map(function(x, i) {
+    const source = base.get(a);
+    const list = source.map(function(x, i) {
       if (condsMatch(x, i)) {
         return item.mod(x, f);
       } else {
@@ -241,7 +241,7 @@ Objektiv.makeTraversal = function(base, item, conds) {
     );
   };
   t.traversal = function(pred) {
-    var t = Objektiv.makeTraversal(item, null, pred);
+    const t = Objektiv.makeTraversal(item, null, pred);
     return Objektiv.makeTraversal(base, t, conds);
   };
   t.filter = function(pred) {
@@ -257,7 +257,7 @@ Objektiv.makeTraversal = function(base, item, conds) {
 Objektiv.makeCursor = function(getter, setter, lens) {
   lens = lens || Objektiv.full;
 
-  var c = function(value) {
+  const c = function(value) {
     if (arguments.length === 0) {
       return c.get();
     } else {
@@ -301,9 +301,9 @@ Objektiv.makeCursor = function(getter, setter, lens) {
 };
 
 Objektiv.dataCursor = function(data, callback) {
-  var updateCallbacks = [];
+  const updateCallbacks = [];
 
-  var onUpdate = function(callback) {
+  const onUpdate = function(callback) {
     updateCallbacks.push(callback);
   };
 
@@ -311,7 +311,7 @@ Objektiv.dataCursor = function(data, callback) {
     onUpdate(callback);
   }
 
-  var setter = function(value) {
+  const setter = function(value) {
     updateCallbacks.forEach(function(cb) {
       cb(value, data);
     });
@@ -319,7 +319,7 @@ Objektiv.dataCursor = function(data, callback) {
     data = value;
   };
 
-  var c = Objektiv.makeCursor(function() {
+  const c = Objektiv.makeCursor(function() {
     return data;
   }, setter);
 
