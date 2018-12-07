@@ -3,6 +3,8 @@ Objektiv [![Build Status](https://travis-ci.org/nLight/objektiv.svg?branch=maste
 
 Functional lenses in JavaScript
 
+Objektiv (German) Lens, optics, objective
+
 ## Basics
 
 `Objektiv.attr('field')` Object attribute accessor.<br>
