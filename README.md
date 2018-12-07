@@ -82,7 +82,7 @@ traversal.mod(data, function (s) { return s.toUpperCase() })
 ## Filtered traversals
 
 Array elements can be traversed by calling `.traversal([predicate])` on a lens that references an array.<br>
-You can pass `predicate` in traversal to filter elements of an array or chain `.traversal()).filter(predicate)` function.<br>
+You can pass `predicate` in traversal to filter elements of an array or chain `.traversal().filter(predicate)` function.<br>
 Several `.filter()` functions can be chained one after another.
 
 ```javascript
