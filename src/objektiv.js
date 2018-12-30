@@ -1,23 +1,23 @@
 function composeLenses(lenses) {
   return lenses.reduce(function(lens1, lens2) {
     return Objektiv.makeLens(
-      function(a) {
-        const _a = lens1(a);
-        return lens2(_a);
+      function(data) {
+        const data1 = lens1(data);
+        return lens2(data1);
       },
-      function(a, val) {
-        const _a = lens1(a);
-        const _val = lens2(_a, val);
-        return lens1(a, _val);
+      function(data, value) {
+        const data1 = lens1(data);
+        const value1 = lens2(data1, value);
+        return lens1(data, value1);
       }
     );
-  }, Objektiv.full);
+  }, Objektiv.identity);
 }
 
 const Objektiv = { resolve: {}, lenses: {} };
 
 Objektiv.makeLens = function(getter, setter) {
-  const f = function() {
+  const lens = function() {
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
     } else if (arguments.length == 2) {
@@ -25,24 +25,17 @@ Objektiv.makeLens = function(getter, setter) {
     }
   };
 
-  f.get = getter; // l(a) = l.get(a);
-  f.set = setter; // l(a, val) = l.set(a,val);
+  lens.get = getter; // lens(data) = lens.get(data);
+  lens.set = setter; // lens(data, value) = lens.set(data, value);
 
-  f.mod = function(a, f) {
-    return setter(a, f(getter(a)));
-  };
+  lens.mod = (data, predicate) => setter(data, predicate(getter(data)));
+  lens.then = (...args) => composeLenses([lens, ...args]);
+  lens.traversal = predicate =>
+    Objektiv.makeTraversal(lens, Objektiv.identity, predicate);
 
-  f.then = function() {
-    return composeLenses(Array.prototype.slice.call(arguments));
-  }.bind(null, f);
+  mixinLenses(lens);
 
-  f.traversal = function(pred) {
-    return Objektiv.makeTraversal(f, null, pred);
-  };
-
-  mixinLenses(f);
-
-  return f;
+  return lens;
 };
 
 /// Resolvers
@@ -50,15 +43,15 @@ Objektiv.makeLens = function(getter, setter) {
 // throws if path can not be resolved in the object
 Objektiv.resolve.strict = function(actions) {
   return Objektiv.makeLens(
-    function(a) {
-      const e = actions.check(a);
-      if (e) throw e;
-      return actions.get(a);
+    function(data) {
+      const error = actions.check(data);
+      if (error) throw error;
+      return actions.get(data);
     },
-    function(a, val) {
-      const e = actions.check(a);
-      if (e) throw e;
-      return actions.set(a, val);
+    function(data, value) {
+      const error = actions.check(data);
+      if (error) throw error;
+      return actions.set(data, value);
     }
   );
 };
@@ -68,15 +61,15 @@ Objektiv.resolve.strict = function(actions) {
 // set - returns data unchanged if path can't be resolved
 Objektiv.resolve.partial = function(actions) {
   return Objektiv.makeLens(
-    function(a) {
-      const e = actions.check(a);
-      if (e) return undefined;
-      return actions.get(a);
+    function(data) {
+      const error = actions.check(data);
+      if (error) return undefined;
+      return actions.get(data);
     },
-    function(a, val) {
-      const e = actions.check(a);
-      if (e) return a;
-      return actions.set(a, val);
+    function(data, value) {
+      const error = actions.check(data);
+      if (error) return data;
+      return actions.set(data, value);
     }
   );
 };
@@ -85,21 +78,21 @@ Objektiv.resolve.partial = function(actions) {
 // get - returns undefined if path can't be resolved
 // set - sets the value at the path
 Objektiv.resolve.tryhard = function(actions) {
-  return Objektiv.makeLens(function(a) {
-    const e = actions.check(a);
-    if (e) return undefined;
-    return actions.get(a);
+  return Objektiv.makeLens(function(data) {
+    const error = actions.check(data);
+    if (error) return undefined;
+    return actions.get(data);
   }, actions.set);
 };
 
 // Fallback resolver
-// get - returns default vaule if path can't be resolved
+// get - returns default value if path can't be resolved
 Objektiv.resolve.fallback = function(defaultValue) {
   return function(actions) {
-    return Objektiv.makeLens(function(a) {
-      const e = actions.check(a);
-      if (e) return defaultValue;
-      return actions.get(a);
+    return Objektiv.makeLens(function(data) {
+      const error = actions.check(data);
+      if (error) return defaultValue;
+      return actions.get(data);
     }, actions.set);
   };
 };
@@ -116,46 +109,31 @@ Objektiv.makeAtLens = function(i, resolver) {
         );
       }
     },
-    get: function(a) {
-      return a[i];
-    },
-    set: function(a, val) {
-      const _a = (a || []).slice(0);
-      _a[i] = val;
-      return _a;
+    get: data => data[i],
+    set: (data, value) => {
+      const copy = (data || []).slice(0);
+      copy[i] = value;
+      return copy;
     }
   });
 };
 
 Objektiv.makeAttrLens = function(name, resolver) {
   return resolver({
-    check: function(a) {
-      if (a === undefined) {
+    check(data) {
+      if (data === undefined) {
         return TypeError("Data is undefined!");
-      } else if (!a.hasOwnProperty(name)) {
+      } else if (!data.hasOwnProperty(name)) {
         return TypeError("Property '" + name + "' doesn't exist!");
       }
     },
-    get: function(a) {
-      return a[name];
-    },
-    set: function(a, val) {
-      const o = Object.assign({}, a);
-      o[name] = val;
-      return o;
-    }
+    get: data => data[name],
+    set: (data, value) => ({ ...data, [name]: value })
   });
 };
 
 /// Normal Lenses
-Objektiv.full = Objektiv.makeLens(
-  function(a) {
-    return a;
-  },
-  function(a, val) {
-    return val;
-  }
-);
+Objektiv.identity = Objektiv.makeLens(data => data, (data, value) => value);
 
 Objektiv.lenses.at = function(i, defaultValue) {
   const resolver =
@@ -196,108 +174,91 @@ function mixinLenses(obj) {
 }
 
 /// Traversals
-Objektiv.makeTraversal = function(base, item, conds) {
-  item = item || Objektiv.full;
-  conds = conds || [];
-  if (typeof conds === "function") {
-    conds = [[conds, Objektiv.full]];
+Objektiv.makeTraversal = function(
+  base,
+  item = Objektiv.identity,
+  conditionals = []
+) {
+  if (typeof conditionals === "function") {
+    conditionals = [[conditionals, Objektiv.identity]];
   }
 
-  function condsMatch(el, i) {
-    return conds.every(function(cond) {
-      const pred = cond[0],
-        lens = cond[1];
-      return pred(lens(el), i);
-    });
+  function applyConditionals(data, i) {
+    return conditionals.every(([predicate, lens]) => predicate(lens(data), i));
   }
 
-  const t = {};
-  t.get = function(a) {
-    const list = base.get(a);
-    return list.filter(condsMatch).map(item.get);
-  };
-  t.mod = function(a, f) {
-    const source = base.get(a);
-    const list = source.map(function(x, i) {
-      if (condsMatch(x, i)) {
-        return item.mod(x, f);
+  const traversal = {};
+  traversal.get = data =>
+    base(data)
+      .filter(applyConditionals)
+      .map(item.get);
+
+  traversal.mod = function(data, predicate) {
+    const list = base(data).map(function(data1, i) {
+      if (applyConditionals(data1, i)) {
+        return item.mod(data1, predicate);
       } else {
-        return x;
+        return data1;
       }
     });
-    return base.set(a, list);
+    return base.set(data, list);
   };
-  t.set = function(a, value) {
-    return t.mod(a, function() {
-      return value;
-    });
-  };
+  traversal.set = (data, value) => traversal.mod(data, () => value);
 
-  t.then = function() {
-    return Objektiv.makeTraversal(
-      base,
-      item.then.apply(null, arguments),
-      conds
+  traversal.then = (...args) =>
+    Objektiv.makeTraversal(base, item.then.apply(null, args), conditionals);
+
+  traversal.traversal = function(predicate) {
+    const itemTraversal = Objektiv.makeTraversal(
+      item,
+      Objektiv.identity,
+      predicate
     );
-  };
-  t.traversal = function(pred) {
-    const t = Objektiv.makeTraversal(item, null, pred);
-    return Objektiv.makeTraversal(base, t, conds);
-  };
-  t.filter = function(pred) {
-    return Objektiv.makeTraversal(base, item, conds.concat([[pred, item]]));
+    return Objektiv.makeTraversal(base, itemTraversal, conditionals);
   };
 
-  mixinLenses(t);
+  traversal.filter = predicate =>
+    Objektiv.makeTraversal(
+      base,
+      item,
+      conditionals.concat([[predicate, item]])
+    );
 
-  return t;
+  mixinLenses(traversal);
+
+  return traversal;
 };
 
 /// Cursors
 Objektiv.makeCursor = function(getter, setter, lens) {
-  lens = lens || Objektiv.full;
+  lens = lens || Objektiv.identity;
 
-  const c = function(value) {
-    if (arguments.length === 0) {
-      return c.get();
-    } else {
-      return c.set(value);
-    }
-  };
-  c.get = function() {
-    return lens.get(getter());
-  };
-  c.set = function(value) {
-    return setter(lens.set(getter(), value));
-  };
-  c.mod = function(f) {
-    return setter(lens.mod(getter(), f));
-  };
+  const cursor = value =>
+    value === undefined ? cursor.get() : cursor.set(value);
 
-  c.then = function() {
-    return Objektiv.makeCursor(
+  cursor.get = () => lens.get(getter());
+  cursor.set = value => setter(lens.set(getter(), value));
+  cursor.mod = predicate => setter(lens.mod(getter(), predicate));
+
+  cursor.then = (...args) =>
+    Objektiv.makeCursor(getter, setter, lens.then.apply(null, args));
+
+  cursor.traversal = predicate =>
+    Objektiv.makeCursor(
       getter,
       setter,
-      lens.then.apply(null, arguments)
+      Objektiv.makeTraversal(lens, Objektiv.identity, predicate)
     );
-  };
-  c.traversal = function(pred) {
-    return Objektiv.makeCursor(
-      getter,
-      setter,
-      Objektiv.makeTraversal(lens, null, pred)
-    );
-  };
 
-  mixinLenses(c);
+  mixinLenses(cursor);
 
-  c.map = function(callback) {
-    return c.get().map(function(_, i) {
-      return callback(c.at(i), i, c);
+  cursor.map = function(callback) {
+    return cursor.get().map(function(_, i) {
+      return callback(cursor.at(i), i, cursor);
     });
   };
 
-  return c;
+  return cursor;
 };
 
 Objektiv.dataCursor = function(data, callback) {
@@ -312,20 +273,18 @@ Objektiv.dataCursor = function(data, callback) {
   }
 
   const setter = function(value) {
-    updateCallbacks.forEach(function(cb) {
-      cb(value, data);
+    updateCallbacks.forEach(function(callback) {
+      callback(value, data);
     });
 
     data = value;
   };
 
-  const c = Objektiv.makeCursor(function() {
-    return data;
-  }, setter);
+  const cursor = Objektiv.makeCursor(() => data, setter);
 
-  c.onUpdate = onUpdate;
+  cursor.onUpdate = onUpdate;
 
-  return c;
+  return cursor;
 };
 
 module.exports = Objektiv;
