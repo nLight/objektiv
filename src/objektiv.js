@@ -1,15 +1,8 @@
-function composeLenses(lenses) {
+function compose(lenses) {
   return lenses.reduce(function(lens1, lens2) {
     return Objektiv.makeLens(
-      function(data) {
-        const data1 = lens1(data);
-        return lens2(data1);
-      },
-      function(data, value) {
-        const data1 = lens1(data);
-        const value1 = lens2(data1, value);
-        return lens1(data, value1);
-      },
+      data => lens2.get(lens1.get(data)),
+      (data, value) => lens1.set(data, lens2.set(lens1.get(data), value)),
       lens2.id,
       [lens1.path, lens2.path]
         .filter(path => path.toString().length > 0)
@@ -21,23 +14,16 @@ function composeLenses(lenses) {
 const Objektiv = { resolve: {}, lenses: {} };
 
 Objektiv.makeLens = function(getter, setter, id, path) {
-  const lens = function() {
-    if (arguments.length == 1) {
-      return getter.apply(this, arguments);
-    } else if (arguments.length == 2) {
-      return setter.apply(this, arguments);
-    }
+  const lens = {
+    id,
+    path: path || id,
+    get: getter,
+    set: setter,
+    map: (data, predicate) => setter(data, predicate(getter(data))),
+    then: (...args) => compose([lens, ...args]),
+    traversal: predicate =>
+      Objektiv.makeTraversal(lens, Objektiv.identity, predicate)
   };
-
-  lens.id = id;
-  lens.path = path || id;
-  lens.get = getter; // lens(data) = lens.get(data);
-  lens.set = setter; // lens(data, value) = lens.set(data, value);
-
-  lens.mod = (data, predicate) => setter(data, predicate(getter(data)));
-  lens.then = (...args) => composeLenses([lens, ...args]);
-  lens.traversal = predicate =>
-    Objektiv.makeTraversal(lens, Objektiv.identity, predicate);
 
   mixinLenses(lens);
 
@@ -202,24 +188,23 @@ Objektiv.makeTraversal = function(
   }
 
   const applyConditionals = (data, i) =>
-    conditionals.every(([predicate, lens]) => predicate(lens(data), i));
+    conditionals.every(([predicate, lens]) => predicate(lens.get(data), i));
 
   const traversal = {
     id: `[${item.path}]`,
     path: `${base.path}[${item.path}]`,
     get: data =>
-      base(data)
+      base
+        .get(data)
         .filter(applyConditionals)
         .map(item.get),
-    set: (data, value) => traversal.mod(data, () => value),
-    mod: function(data, predicate) {
-      const list = base(data).map(function(data1, i) {
-        if (applyConditionals(data1, i)) {
-          return item.mod(data1, predicate);
-        } else {
-          return data1;
-        }
-      });
+    set: (data, value) => traversal.map(data, () => value),
+    map: (data, predicate) => {
+      const list = base
+        .get(data)
+        .map((data1, i) =>
+          applyConditionals(data1, i) ? item.map(data1, predicate) : data1
+        );
       return base.set(data, list);
     },
     then: (...args) =>
@@ -244,35 +229,26 @@ Objektiv.makeTraversal = function(
 };
 
 /// Cursors
-Objektiv.makeCursor = function(getter, setter, lens) {
-  lens = lens || Objektiv.identity;
-
-  const cursor = value =>
-    value === undefined ? cursor.get() : cursor.set(value);
-
-  cursor.id = lens.id;
-  cursor.path = lens.path;
-  cursor.get = () => lens.get(getter());
-  cursor.set = value => setter(lens.set(getter(), value));
-  cursor.mod = predicate => setter(lens.mod(getter(), predicate));
-
-  cursor.then = (...args) =>
-    Objektiv.makeCursor(getter, setter, lens.then.apply(null, args));
-
-  cursor.traversal = predicate =>
-    Objektiv.makeCursor(
-      getter,
-      setter,
-      Objektiv.makeTraversal(lens, Objektiv.identity, predicate)
-    );
+Objektiv.makeCursor = function(getter, setter, lens = Objektiv.identity) {
+  const cursor = {
+    id: lens.id,
+    path: lens.path,
+    get: () => lens.get(getter()),
+    set: value => setter(lens.set(getter(), value)),
+    fmap: predicate => setter(lens.map(getter(), predicate)),
+    map: predicate =>
+      cursor.get().map((_, i) => predicate(cursor.at(i), i, cursor)),
+    then: (...args) =>
+      Objektiv.makeCursor(getter, setter, lens.then.apply(null, args)),
+    traversal: predicate =>
+      Objektiv.makeCursor(
+        getter,
+        setter,
+        Objektiv.makeTraversal(lens, Objektiv.identity, predicate)
+      )
+  };
 
   mixinLenses(cursor);
-
-  cursor.map = function(callback) {
-    return cursor.get().map(function(_, i) {
-      return callback(cursor.at(i), i, cursor);
-    });
-  };
 
   return cursor;
 };
@@ -280,9 +256,7 @@ Objektiv.makeCursor = function(getter, setter, lens) {
 Objektiv.dataCursor = function(data, callback) {
   const updateCallbacks = [];
 
-  const onUpdate = function(callback) {
-    updateCallbacks.push(callback);
-  };
+  const onUpdate = callback => updateCallbacks.push(callback);
 
   if (callback) {
     onUpdate(callback);

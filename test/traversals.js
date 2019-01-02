@@ -35,7 +35,7 @@ describe("Traversal", function() {
       assert.deepEqual(traverse.get(data), [0, 1, 2]);
     });
     it("modifies traversed x", function() {
-      assert.deepEqual(traverse.mod(data, incr), {
+      assert.deepEqual(traverse.map(data, incr), {
         array: [{ x: 1, y: 9 }, { x: 2, y: 8 }, { x: 3, y: 7 }]
       });
     });
@@ -52,7 +52,7 @@ describe("Traversal", function() {
       assert.deepEqual(filtered.get(data), [1]);
     });
     it("modifies traversed x", function() {
-      assert.deepEqual(filtered.mod(data, incr), {
+      assert.deepEqual(filtered.map(data, incr), {
         array: [{ x: 0, y: 9 }, { x: 2, y: 8 }, { x: 2, y: 7 }]
       });
     });
@@ -70,7 +70,7 @@ describe("Traversal", function() {
       assert.deepEqual(filtered.get(data), [1]);
     });
     it("modifies traversed x", function() {
-      assert.deepEqual(filtered.mod(data, incr), {
+      assert.deepEqual(filtered.map(data, incr), {
         array: [{ x: 0, y: 9 }, { x: 2, y: 8 }, { x: 2, y: 7 }]
       });
     });
@@ -90,7 +90,7 @@ describe("Traversal", function() {
       assert.deepEqual(filtered.get(data), [8]);
     });
     it("modifies traversed y", function() {
-      assert.deepEqual(filtered.mod(data, incr), {
+      assert.deepEqual(filtered.map(data, incr), {
         array: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 7 }]
       });
     });
@@ -111,7 +111,7 @@ describe("Traversal", function() {
       assert.deepEqual(filtered.get(data), [8]);
     });
     it("modifies traversed y", function() {
-      assert.deepEqual(filtered.mod(data, incr), {
+      assert.deepEqual(filtered.map(data, incr), {
         array: [{ x: 0, y: 9 }, { x: 1, y: 9 }, { x: 2, y: 7 }]
       });
     });
@@ -175,7 +175,7 @@ describe("Nested traversals", function() {
     });
 
     it("modify data", function() {
-      assert.deepEqual(nestedTraversal.mod(users, toUpper), {
+      assert.deepEqual(nestedTraversal.map(users, toUpper), {
         users: [
           {
             friends: [
@@ -210,7 +210,7 @@ describe("Nested traversals", function() {
     });
 
     it("modify data", function() {
-      assert.deepEqual(nestedTraversalFiltered.mod(users, toUpper), {
+      assert.deepEqual(nestedTraversalFiltered.map(users, toUpper), {
         users: [
           {
             friends: [

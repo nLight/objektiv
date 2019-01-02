@@ -1,5 +1,4 @@
-Objektiv [![Build Status](https://travis-ci.org/nLight/objektiv.svg?branch=master)](https://travis-ci.org/nLight/objektiv)
-==================
+# Objektiv [![Build Status](https://travis-ci.org/nLight/objektiv.svg?branch=master)](https://travis-ci.org/nLight/objektiv)
 
 Functional lenses in JavaScript
 
@@ -12,73 +11,57 @@ Objektiv (German) Lens, optics, objective
 `lens.then(otherLens, ...)` Lens composition can take many arguments.<br>
 `lens.traversal([filter])` Returns traversal, optionally filtered.
 
-
 # Regular lenses
 
 Throw TypeError unless element has been found
 
 ```javascript
-var data = { array: [1, 2, 3] };
-var firstOfSome = Objektiv.attr('array').at(0);
+const data = { array: [1, 2, 3] };
+const firstOfSome = Objektiv.attr("array").at(0);
 
-// Getter
-firstOfSome(data); //=> 1
 firstOfSome.get(data); //=> 1
-
-// Setter
-firstOfSome(data, 10); //=> { array: [10, 2, 3] }
 firstOfSome.set(data, 10); //=> { array: [10, 2, 3] }
-
-// Modifier
-var incr = function(x){ return x + 1 };
-firstOfSome.mod(data, incr); //=> { array: [2, 2, 3] }
-
+firstOfSome.map(data, x => x + 1); //=> { array: [2, 2, 3] }
 ```
-
 
 # Partial lenses
 
 Skip missing element
 
 ```javascript
-var data = { array: [1, 2, 3] };
-var firstOfMissing = Objektiv.partialAttr('missing').partialAt(0);
+const data = { array: [1, 2, 3] };
+const firstOfMissing = Objektiv.partialAttr("missing").partialAt(0);
 
-// Getter returns undefined
-firstOfMissing(data); //=> undefined
 firstOfMissing.get(data); //=> undefined
-
-// Setter returns data unchanged
-firstOfMissing(data, 10); //=> { array: [1, 2, 3] }
 firstOfMissing.set(data, 10); //=> { array: [1, 2, 3] }
-
-// Modifier returns data unchanged
-var incr = function(x){ return x + 1 };
-firstOfMissing.mod(data, incr); //=> { array: [1, 2, 3] }
-
+firstOfMissing.map(data, x => x + 1); //=> { array: [1, 2, 3] }
 ```
-
 
 # Traversals
 
 Traversals make working with series of data easy:
 
 ```javascript
-var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var traversal = Objektiv.attr('array').traversal().attr('x');
+const data = { array: [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 7 }] };
+const traversal = Objektiv.attr("array")
+  .traversal()
+  .attr("x");
 
 traversal.get(data); //=> [0, 1, 2]
-traversal.mod(data, incr) //=> {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]}
-traversal.set(data, 6) //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
+traversal.map(data, x => x + 1); //=> {array: [{x: 1, y:9}, {x: 2, y: 8}, {x: 3, y: 7}]}
+traversal.set(data, 6); //=> {array: [{x: 6, y:9}, {x: 6, y: 8}, {x: 6, y: 7}]}
 
 // Nested traversals
-var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
-var traversal = Objektiv.attr('users').traversal().attr('friends').traversal()
+const data = {
+  users: [{ id: 1, friends: ["Alice", "Bob"] }, { id: 2, friends: ["Sam"] }]
+};
+const traversal = Objektiv.attr("users")
+  .traversal()
+  .attr("friends")
+  .traversal();
 
-traversal.get(data)
-//=> [['Alice', 'Bob'], ['Sam']]
-traversal.mod(data, function (s) { return s.toUpperCase() })
-//=> {users: [{id: 1, friends: ['ALICE', 'BOB']}, {id: 2, friends: ['SAM']}]};
+traversal.get(data); //=> [['Alice', 'Bob'], ['Sam']]
+traversal.map(data, name => name.toUpperCase()); //=> {users: [{id: 1, friends: ['ALICE', 'BOB']}, {id: 2, friends: ['SAM']}]};
 ```
 
 ## Filtered traversals
@@ -88,48 +71,51 @@ You can pass `predicate` in traversal to filter elements of an array or chain `.
 Several `.filter()` functions can be chained one after another.
 
 ```javascript
-var data = {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 2, y: 7}]};
-var x_gt_1 = function (el) { return el.x > 1; }
-var traversal = Objektiv.attr('array').traversal(x_gt_1).attr('x');
+const data = { array: [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 7 }] };
+const xGreaterThanOne = el => el.x > 1;
+const traversal = Objektiv.attr("array")
+  .traversal(xGreaterThanOne)
+  .attr("x");
 // Same as:
-Objektiv.attr('array').traversal().filter(x_gt_1).attr('x');
+Objektiv.attr("array")
+  .traversal()
+  .filter(xGreaterThanOne)
+  .attr("x");
 
 traversal.get(data); //=> [2]
-traversal.mod(data, incr) //=> {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 3, y: 7}]}
-traversal.set(data, 6) //=> {array: [{x: 0, y:9}, {x: 0, y: 8}, {x: 6, y: 7}]}
+traversal.map(data, x => x + 1); //=> {array: [{x: 0, y:9}, {x: 1, y: 8}, {x: 3, y: 7}]}
+traversal.set(data, 6); //=> {array: [{x: 0, y:9}, {x: 0, y: 8}, {x: 6, y: 7}]}
 
 // Nested traversals
-var data = {users: [{id: 1, friends: ['Alice', 'Bob']}, {id: 2, friends: ['Sam']}]};
-var friendly = function (user) { return user.friends.length == 2; }
-var threeLetter = function (s) { return s.length == 3; }
-var traversal = Objektiv.attr('users').traversal(friendly)
-                      .attr('friends').traversal(threeLetter);
+const data = {
+  users: [{ id: 1, friends: ["Alice", "Bob"] }, { id: 2, friends: ["Sam"] }]
+};
+const hasTwoFriends = user => user.friends.length == 2;
+const threeLetter = str => str.length === 3;
 
-traversal.get(data)
-//=> [['Bob']]
-traversal.mod(data, function (s) { return s.toUpperCase() })
-//=> {users: [{id: 1, friends: ['Alice', 'BOB']}, {id: 2, friends: ['Sam']}]};
+const traversal = Objektiv.attr("users")
+  .traversal(hasTwoFriends)
+  .attr("friends")
+  .traversal(threeLetter);
+
+traversal.get(data); //=> [['Bob']]
+traversal.map(data, name => name.toUpperCase()); //=> {users: [{id: 1, friends: ['Alice', 'BOB']}, {id: 2, friends: ['Sam']}]};
 ```
 
 # Cursors
 
-Objektiv also provides cursors which are lenses enclosed over data or root accessors. Cursors a handy self-contained object to pass around. Cursors can be composed and traversed as regular lenses.
+Objektiv also provides cursors which are lenses enclosed over data or root accessors. Cursor is a handy self-contained object to pass around. Cursors can be composed and traversed as regular lenses.
 
 ```javascript
-var data = {some: deep: 1};
-var full = Objektiv.dataCursor(data);
-var deepLens = Objektiv.attr('some').attr('deep');
-var cursor = full.then(deepLens);
+const data = {some: deep: 1};
+const full = Objektiv.dataCursor(data);
+const deepLens = Objektiv.attr('some').attr('deep');
+const cursor = full.then(deepLens);
 
-// Access
-cursor() //=> 1
 cursor.get() //=> 1
-
-// Modify
-cursor(42)
 cursor.set(42)
-cursor() //=> 42
-full() //=> {some: deep: 42}
+cursor.get() //=> 42
+full.get() //=> {some: deep: 42}
 // All data are handled as immutable so original data is still:
 data   //=> {some: deep: 1}
 ```
@@ -137,25 +123,25 @@ data   //=> {some: deep: 1}
 Cursor can notify about each change via callback:
 
 ```javascript
-var full = Objektiv.dataCursor(data, function (newState, oldState) {
-    // ... deal with it
-})
+const full = Objektiv.dataCursor(data, (newState, oldState) => {
+  // ... deal with it
+});
 ```
 
-This way it can be used with react.js. Inside a component:
+This way it can be used with ReactJS. Inside a component:
 
 ```javascript
-var that = this;
-var full = Objektiv.dataCursor(this.state, function (state) {
+const that = this;
+const full = Objektiv.dataCursor(this.state, function(state) {
   that.setState(state);
 });
-var childCursor = full.attr('child') // ... and pass it to a child component
+const childCursor = full.attr("child"); // ... and pass it to a child component
 ```
 
 Outside of a root component:
 
 ```javascript
-var root = <Root ... />;
+const root = <Root ... />;
 Objektiv.dataCursor({/** Initial data **/}, function (state) {
   root.setProps(state);
 });

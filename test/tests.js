@@ -11,11 +11,11 @@ describe("Objektiv", function() {
 
     describe("when property exists", function() {
       it("returns value of a property", function() {
-        assert.equal(1, Objektiv.attr("someField")(data));
+        assert.equal(1, Objektiv.attr("someField").get(data));
       });
 
       it("sets a value of a property", function() {
-        assert.deepEqual(Objektiv.attr("someField")(data, 2), {
+        assert.deepEqual(Objektiv.attr("someField").set(data, 2), {
           someField: 2,
           someValue: 2
         });
@@ -25,7 +25,7 @@ describe("Objektiv", function() {
         var incr = function(x) {
           return x + 1;
         };
-        assert.deepEqual(Objektiv.attr("someField").mod(data, incr), {
+        assert.deepEqual(Objektiv.attr("someField").map(data, incr), {
           someField: 2,
           someValue: 2
         });
@@ -53,14 +53,14 @@ describe("Objektiv", function() {
         );
       });
 
-      it("throws a TypeError on mod", function() {
+      it("throws a TypeError on map", function() {
         var incr = function(x) {
           return x + 1;
         };
 
         assert.throws(
           function() {
-            Objektiv.attr("not_found").mod(data, incr);
+            Objektiv.attr("not_found").map(data, incr);
           },
           TypeError,
           "Property 'not_found' doesn't exist!"
@@ -78,11 +78,11 @@ describe("Objektiv", function() {
 
     describe("when element with index exists in array", function() {
       it("returns value of array", function() {
-        assert.equal(1, Objektiv.at(0)(data));
+        assert.equal(1, Objektiv.at(0).get(data));
       });
 
       it("sets a value of a property", function() {
-        assert.deepEqual(Objektiv.at(1)(data, 4), [1, 4, 3]);
+        assert.deepEqual(Objektiv.at(1).set(data, 4), [1, 4, 3]);
       });
     });
 
@@ -188,11 +188,9 @@ describe("Objektiv", function() {
       it("creates attr on set", function() {
         assert.deepEqual(lens.set(data, 1), { some: 1, not_found: 1 });
       });
-      it("uses default on mod", function() {
-        var incr = function(x) {
-          return x + 1;
-        };
-        assert.deepEqual(lens.mod(data, incr), { some: 1, not_found: 1 });
+      it("uses default on map", function() {
+        const incr = x => x + 1;
+        assert.deepEqual(lens.map(data, incr), { some: 1, not_found: 1 });
       });
     });
   });
@@ -207,15 +205,13 @@ describe("Objektiv", function() {
         assert.equal(lensY.get(data), 5);
         assert.equal(lensZ.get(data), 10);
       });
-      it("uses first default on mod", function() {
-        var incr = function(x) {
-          return x + 1;
-        };
-        assert.deepEqual(lensY.mod(data, incr), {
+      it("uses first default on map", function() {
+        const incr = x => x + 1;
+        assert.deepEqual(lensY.map(data, incr), {
           some: 1,
           x: { y: 6, z: 10 }
         });
-        assert.deepEqual(lensZ.mod(data, incr), { some: 1, x: { z: 11 } });
+        assert.deepEqual(lensZ.map(data, incr), { some: 1, x: { z: 11 } });
       });
     });
   });
@@ -226,7 +222,9 @@ describe("Objektiv", function() {
     describe("using then()", () => {
       it("Composes two lenses", function() {
         assert.deepEqual(
-          Objektiv.attr("someField").then(Objektiv.at(0))(data),
+          Objektiv.attr("someField")
+            .then(Objektiv.at(0))
+            .get(data),
           1
         );
       });
@@ -243,17 +241,23 @@ describe("Objektiv", function() {
           Objektiv.at(2),
           Objektiv.attr("foo")
         );
-        assert.deepEqual(composition(data), 10);
+        assert.deepEqual(composition.get(data), 10);
       });
     });
 
     describe("using chaining", () => {
       it("chains constructors", function() {
-        assert.deepEqual(Objektiv.attr("someField").at(0)(data), 1);
+        assert.deepEqual(
+          Objektiv.attr("someField")
+            .at(0)
+            .get(data),
+          1
+        );
         assert.deepEqual(
           Objektiv.attr("someField")
             .at(2)
-            .attr("foo")(data),
+            .attr("foo")
+            .get(data),
           10
         );
       });
@@ -264,19 +268,7 @@ describe("Objektiv", function() {
     });
   });
 
-  describe("Aliases", function() {
-    var data = [1, 2, 3];
-
-    it("has get alias", function() {
-      assert.equal(Objektiv.at(0).get(data), Objektiv.at(0)(data));
-    });
-
-    it("has set alias", function() {
-      assert.deepEqual(Objektiv.at(0).set(data, 5), Objektiv.at(0)(data, 5));
-    });
-  });
-
-  describe("Cursor", function() {
+  describe("Data Cursor", function() {
     var data = {
       deep: { data: 1 },
       elements: [
@@ -311,9 +303,7 @@ describe("Objektiv", function() {
       assert.equal(1, deepCursor.get());
       deepCursor.set(2);
       assert.equal(2, deepCursor.get());
-      deepCursor.mod(function(x) {
-        return x + 1;
-      });
+      deepCursor.fmap(x => x + 1);
       assert.equal(3, deepCursor.get());
     });
 
@@ -324,24 +314,20 @@ describe("Objektiv", function() {
       assert.deepEqual(fullCursor.attr("deep").get(), { data: 1 });
     });
 
-    it("receives new state and old state in a callback", function() {
-      var full = Objektiv.dataCursor(data, function(newState, oldState) {
+    it("receives new state and old state in a callback", function(done) {
+      Objektiv.dataCursor({ deep: { data: 1 } }, (newState, oldState) => {
         assert.deepEqual(oldState, { deep: { data: 1 } });
         assert.deepEqual(newState, { deep: { data: 2 } });
-      });
-      var deepCursor = Objektiv.dataCursor(data)
+        done();
+      })
         .attr("deep")
-        .attr("data");
-      deepCursor.mod(function(x) {
-        return x + 1;
-      });
+        .attr("data")
+        .set(2);
     });
 
     it("maps through cursors", function() {
       var elementsCursor = Objektiv.dataCursor(data).attr("elements");
-      var mappedCursors = elementsCursor.map(function(elCursor) {
-        return elCursor;
-      });
+      var mappedCursors = elementsCursor.map(elCursor => elCursor);
 
       assert.equal(mappedCursors[0].attr("name").get(), "Carbon");
     });
@@ -360,7 +346,7 @@ describe("Objektiv", function() {
   });
 
   describe("Traversed cursors", function() {
-    var data = [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 7 }];
+    const data = [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 7 }];
     var fullCursor, cursor;
 
     beforeEach(function reset() {
@@ -369,12 +355,12 @@ describe("Objektiv", function() {
     });
 
     it("get traversed x", function() {
-      assert.deepEqual(cursor(), [0, 1, 2]);
+      assert.deepEqual(cursor.get(), [0, 1, 2]);
     });
 
     it("set traversed x", function() {
-      cursor(42);
-      assert.deepEqual(fullCursor(), [
+      cursor.set(42);
+      assert.deepEqual(fullCursor.get(), [
         { x: 42, y: 9 },
         { x: 42, y: 8 },
         { x: 42, y: 7 }
@@ -382,10 +368,8 @@ describe("Objektiv", function() {
     });
 
     it("modifies values over traversed x", function() {
-      cursor.mod(function(x) {
-        return x + 1;
-      });
-      assert.deepEqual(fullCursor(), [
+      cursor.fmap(x => x + 1);
+      assert.deepEqual(fullCursor.get(), [
         { x: 1, y: 9 },
         { x: 2, y: 8 },
         { x: 3, y: 7 }
