@@ -16,7 +16,7 @@ function composeLenses(lenses) {
 
 const Objektiv = { resolve: {}, lenses: {} };
 
-Objektiv.makeLens = function(getter, setter) {
+Objektiv.makeLens = function(getter, setter, describe) {
   const lens = function() {
     if (arguments.length == 1) {
       return getter.apply(this, arguments);
@@ -25,6 +25,7 @@ Objektiv.makeLens = function(getter, setter) {
     }
   };
 
+  lens.describe = describe;
   lens.get = getter; // lens(data) = lens.get(data);
   lens.set = setter; // lens(data, value) = lens.set(data, value);
 
@@ -41,65 +42,76 @@ Objektiv.makeLens = function(getter, setter) {
 /// Resolvers
 // Strict resolver.
 // throws if path can not be resolved in the object
-Objektiv.resolve.strict = function(actions) {
+Objektiv.resolve.strict = function({ check, get, set, describe }) {
   return Objektiv.makeLens(
     function(data) {
-      const error = actions.check(data);
+      const error = check(data);
       if (error) throw error;
-      return actions.get(data);
+      return get(data);
     },
     function(data, value) {
-      const error = actions.check(data);
+      const error = check(data);
       if (error) throw error;
-      return actions.set(data, value);
-    }
+      return set(data, value);
+    },
+    describe
   );
 };
 
 // Partial resolver
 // get - returns undefined if path can't be resolved
 // set - returns data unchanged if path can't be resolved
-Objektiv.resolve.partial = function(actions) {
+Objektiv.resolve.partial = function({ check, get, set, describe }) {
   return Objektiv.makeLens(
     function(data) {
-      const error = actions.check(data);
+      const error = check(data);
       if (error) return undefined;
-      return actions.get(data);
+      return get(data);
     },
     function(data, value) {
-      const error = actions.check(data);
+      const error = check(data);
       if (error) return data;
-      return actions.set(data, value);
-    }
+      return set(data, value);
+    },
+    describe
   );
 };
 
 // Try hard resolver
 // get - returns undefined if path can't be resolved
 // set - sets the value at the path
-Objektiv.resolve.tryhard = function(actions) {
-  return Objektiv.makeLens(function(data) {
-    const error = actions.check(data);
-    if (error) return undefined;
-    return actions.get(data);
-  }, actions.set);
+Objektiv.resolve.tryhard = function({ check, get, set, describe }) {
+  return Objektiv.makeLens(
+    function(data) {
+      const error = check(data);
+      if (error) return undefined;
+      return get(data);
+    },
+    set,
+    describe
+  );
 };
 
 // Fallback resolver
 // get - returns default value if path can't be resolved
 Objektiv.resolve.fallback = function(defaultValue) {
-  return function(actions) {
-    return Objektiv.makeLens(function(data) {
-      const error = actions.check(data);
-      if (error) return defaultValue;
-      return actions.get(data);
-    }, actions.set);
+  return function({ check, get, set, describe }) {
+    return Objektiv.makeLens(
+      function(data) {
+        const error = check(data);
+        if (error) return defaultValue;
+        return get(data);
+      },
+      set,
+      describe
+    );
   };
 };
 
 // Low-level lens constructors
 Objektiv.makeAtLens = function(i, resolver) {
   return resolver({
+    describe: i,
     check: function(a) {
       if (a === undefined) {
         return TypeError("Data is undefined!");
@@ -120,6 +132,7 @@ Objektiv.makeAtLens = function(i, resolver) {
 
 Objektiv.makeAttrLens = function(name, resolver) {
   return resolver({
+    describe: name,
     check(data) {
       if (data === undefined) {
         return TypeError("Data is undefined!");

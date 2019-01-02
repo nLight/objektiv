@@ -2,12 +2,12 @@ var assert = require("assert");
 var Objektiv = require("../src/objektiv");
 
 describe("Objektiv", function() {
-  describe("#attr", function() {
-    var data = { deep: { data: { structure: 1 } } };
-  });
-
   describe("Object property", function() {
     var data = { someField: 1, someValue: 2 };
+
+    it("knows its description", () => {
+      assert.equal(Objektiv.attr("someField").describe, "someField");
+    });
 
     describe("when property exists", function() {
       it("returns value of a property", function() {
@@ -61,6 +61,46 @@ describe("Objektiv", function() {
         assert.throws(
           function() {
             Objektiv.attr("not_found").mod(data, incr);
+          },
+          TypeError,
+          "Property 'not_found' doesn't exist!"
+        );
+      });
+    });
+  });
+
+  describe("Array element", function() {
+    var data = [1, 2, 3];
+
+    it("knows its description", () => {
+      assert.equal(Objektiv.at(1).describe, 1);
+    });
+
+    describe("when element with index exists in array", function() {
+      it("returns value of array", function() {
+        assert.equal(1, Objektiv.at(0)(data));
+      });
+
+      it("sets a value of a property", function() {
+        assert.deepEqual(Objektiv.at(1)(data, 4), [1, 4, 3]);
+      });
+    });
+
+    describe("when element with index not exists in array", function() {
+      it("throws a TypeError on get", function() {
+        assert.throws(
+          function() {
+            Objektiv.at(100).get(data);
+          },
+          TypeError,
+          "Element with index 100 not found in the array!"
+        );
+      });
+
+      it("throws a TypeError on set", function() {
+        assert.throws(
+          function() {
+            Objektiv.at(100).set(data, 1);
           },
           TypeError,
           "Property 'not_found' doesn't exist!"
@@ -176,42 +216,6 @@ describe("Objektiv", function() {
           x: { y: 6, z: 10 }
         });
         assert.deepEqual(lensZ.mod(data, incr), { some: 1, x: { z: 11 } });
-      });
-    });
-  });
-
-  describe("Array element", function() {
-    var data = [1, 2, 3];
-
-    describe("when element with index exists in array", function() {
-      it("returns value of array", function() {
-        assert.equal(1, Objektiv.at(0)(data));
-      });
-
-      it("sets a value of a property", function() {
-        assert.deepEqual(Objektiv.at(1)(data, 4), [1, 4, 3]);
-      });
-    });
-
-    describe("when element with index not exists in array", function() {
-      it("throws a TypeError on get", function() {
-        assert.throws(
-          function() {
-            Objektiv.at(100).get(data);
-          },
-          TypeError,
-          "Element with index 100 not found in the array!"
-        );
-      });
-
-      it("throws a TypeError on set", function() {
-        assert.throws(
-          function() {
-            Objektiv.at(100).set(data, 1);
-          },
-          TypeError,
-          "Property 'not_found' doesn't exist!"
-        );
       });
     });
   });
