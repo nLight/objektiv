@@ -5,8 +5,8 @@ describe("Objektiv", function() {
   describe("Object property", function() {
     var data = { someField: 1, someValue: 2 };
 
-    it("knows its description", () => {
-      assert.equal(Objektiv.attr("someField").describe, "someField");
+    it("knows its id", () => {
+      assert.equal(Objektiv.attr("someField").id, "someField");
     });
 
     describe("when property exists", function() {
@@ -72,8 +72,8 @@ describe("Objektiv", function() {
   describe("Array element", function() {
     var data = [1, 2, 3];
 
-    it("knows its description", () => {
-      assert.equal(Objektiv.at(1).describe, 1);
+    it("knows its id", () => {
+      assert.equal(Objektiv.at(1).id, 1);
     });
 
     describe("when element with index exists in array", function() {
@@ -223,29 +223,44 @@ describe("Objektiv", function() {
   describe("Composition", function() {
     var data = { someField: [1, 2, { foo: 10 }] };
 
-    it("Composes two lenses", function() {
-      assert.deepEqual(
-        1,
-        Objektiv.attr("someField").then(Objektiv.at(0))(data)
-      );
+    describe("using then()", () => {
+      it("Composes two lenses", function() {
+        assert.deepEqual(
+          Objektiv.attr("someField").then(Objektiv.at(0))(data),
+          1
+        );
+      });
+
+      it("knows its path", function() {
+        assert.deepEqual(
+          Objektiv.attr("someField").then(Objektiv.at(0)).path,
+          "someField.0"
+        );
+      });
+
+      it("Composes arbitrary number of lenses", function() {
+        var composition = Objektiv.attr("someField").then(
+          Objektiv.at(2),
+          Objektiv.attr("foo")
+        );
+        assert.deepEqual(composition(data), 10);
+      });
     });
 
-    it("Composes arbitrary number of lenses", function() {
-      var composition = Objektiv.attr("someField").then(
-        Objektiv.at(2),
-        Objektiv.attr("foo")
-      );
-      assert.deepEqual(10, composition(data));
-    });
+    describe("using chaining", () => {
+      it("chains constructors", function() {
+        assert.deepEqual(Objektiv.attr("someField").at(0)(data), 1);
+        assert.deepEqual(
+          Objektiv.attr("someField")
+            .at(2)
+            .attr("foo")(data),
+          10
+        );
+      });
 
-    it("has a shortcuts", function() {
-      assert.deepEqual(1, Objektiv.attr("someField").at(0)(data));
-      assert.deepEqual(
-        10,
-        Objektiv.attr("someField")
-          .at(2)
-          .attr("foo")(data)
-      );
+      it("knows its path", function() {
+        assert.deepEqual(Objektiv.attr("someField").at(0).path, "someField.0");
+      });
     });
   });
 
@@ -271,6 +286,24 @@ describe("Objektiv", function() {
       ]
     };
     var lens = Objektiv.attr("deep").attr("data");
+
+    it("knows its id", () => {
+      assert.equal(
+        Objektiv.dataCursor({}).then(Objektiv.attr("deep")).id,
+        "deep"
+      );
+    });
+
+    it("knows its path", () => {
+      assert.equal(
+        Objektiv.dataCursor({}).then(
+          Objektiv.attr("deep")
+            .at(0)
+            .attr("bottom")
+        ).path,
+        "deep.0.bottom"
+      );
+    });
 
     it("works", function() {
       var deepCursor = Objektiv.dataCursor(data).then(lens);

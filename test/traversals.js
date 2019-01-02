@@ -8,6 +8,24 @@ var incr = function(x) {
 describe("Traversal", function() {
   var data = { array: [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 7 }] };
 
+  it("knows its id", () => {
+    assert.equal(
+      Objektiv.attr("array")
+        .traversal()
+        .attr("x").id,
+      "[x]"
+    );
+  });
+
+  it("knows its path", () => {
+    assert.equal(
+      Objektiv.attr("array")
+        .traversal()
+        .attr("x").path,
+      "array[x]"
+    );
+  });
+
   describe("without filter", function() {
     var traverse = Objektiv.attr("array")
       .traversal()
@@ -126,6 +144,25 @@ describe("Nested traversals", function() {
   var toUpper = function(s) {
     return s.toUpperCase();
   };
+
+  it("knows its id", () => {
+    assert.equal(traversal.traversal().attr("name").id, "[friends[name]]");
+  });
+
+  it("knows its path", () => {
+    assert.equal(
+      traversal.traversal().attr("name").path,
+      "users[friends[name]]"
+    );
+    assert.equal(
+      Objektiv.attr("app")
+        .attr("users")
+        .traversal()
+        .attr("friends")
+        .attr("name").path,
+      "app.users[friends.name]"
+    );
+  });
 
   describe("with no filter", function() {
     var nestedTraversal = traversal.traversal().attr("name");
